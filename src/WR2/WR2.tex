@@ -1,0 +1,233 @@
+\documentclass[a4paper,DIV8,10pt]{scrartcl}
+
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{left=3cm,right=3cm,top=3cm,bottom=3cm,bindingoffset=5mm}
+
+  \usepackage{german}    % fuer die deutschen Trennmuster
+  \usepackage{ngerman} % entsprechend fuer die neue Rechtschreibung
+  \usepackage[latin1]{inputenc} % falls Sie Umlaute in den Quellen verwenden wollen
+  \usepackage{amsmath}   % enthaelt nuetzliche Makros fuer Mathematik
+  \usepackage{amsthm}    % fuer Saetze, Definitionen, Beweise, etc.
+  \usepackage{amsfonts}  % spezielle AMS-Mathematik-Fonts
+  \usepackage{relsize}   % fuer \smaller 
+  \usepackage{tikz}      % fuer Graphiken
+  \usepackage[]{ragged2e}
+  \usepackage{hyperref}
+  \usepackage{url}
+  \usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{stmaryrd}
+
+ \def\Gleich#1{\stackrel{\text{\makebox[0pt]{#1}}}{=}} 
+  
+  \newcommand{\N}{\ensuremath{\mathbb{N}}}   % natuerliche Zahlen
+  \newcommand{\Z}{\ensuremath{\mathbb{Z}}}   % ganze Zahlen
+  \newcommand{\Q}{\ensuremath{\mathbb{Q}}}   % rationale Zahlen
+  \newcommand{\R}{\ensuremath{\mathbb{R}}}   % reelle Zahlen
+    \newcommand\scalemath[2]{\scalebox{#1}{\mbox{\ensuremath{\displaystyle #2}}}}
+\definecolor{darkcerulean}{rgb}{0.03, 0.27, 0.49}
+
+  \theoremstyle{definition}
+  \newtheorem{satz}{Satz}[section]
+  \newtheorem{lemma}[satz]{Lemma}
+  \newtheorem{korollar}[satz]{Korollar}
+  \newtheorem{definition}[satz]{Definition}
+  \newtheorem{bemerkung}[satz]{Bemerkung}
+  \newtheorem{aufgabe}[satz]{Aufgabe}
+  \newenvironment{beweis}%
+    {\begin{proof}[Beweis]}
+    {\end{proof}}
+  \newtheorem{beispiel}[satz]{Beispiel}
+
+  \renewcommand{\labelitemi}{--}             % aendert die Symbole bei unnumerierten Aufzaehlungen
+  \makeatletter                              % Fussnote ohne Symbol
+    \def\blfootnote{\xdef\@thefnmark{}\@footnotetext}
+  % Titel des Handouts
+  %   #1 Name des Vortragenden
+  %   #2 email-Adresse 
+  %   #3 Datum des Vortrags
+  %   #4 Titel des Vortrags
+  \newcommand{\handouttitle}[4]
+   {\begin{center}
+      \large #4
+    \end{center}
+
+    \bigskip
+
+    \noindent
+    #1 (\textsf{#2})
+    \hfill
+    #3
+
+  
+    \noindent
+    \rule{\linewidth}{.5pt}
+
+    \bigskip
+
+    \@afterindentfalse\@afterheading
+   }
+  \makeatother
+  \renewcommand{\sectfont}{\normalfont}       % aendert den Font fuer Ueberschriften
+
+
+
+%----------------------------------------------------------------------------------------------------------------------------------------------
+\begin{document}
+
+\handouttitle
+{Wissenschaftliches Rechnen II}
+{SS21}
+{\today}
+
+%-------------------------------------------------------------------------------------------
+% Inhaltsverzeichnis
+%-------------------------------------------------------------------------------------------
+
+% Erstellung des Inhaltsverzeichnisses auf einer neuen Seite
+\tableofcontents
+
+% Umstellung der Seitennummerierung auf kleine römische Ziffern
+\pagenumbering{roman}
+
+
+%% Für das Einsetzen einer Leerseite soll dieser Code auskommentiert werden
+%\newpage
+%\thispagestyle{empty}
+%\hspace{1cm}
+
+\newpage
+
+% Umstellung der Seitennummerierung auf arabische Ziffern
+\pagenumbering{arabic}
+
+\section{Meilenstein 1}
+
+\textbf{Aufgabe 1}
+\\
+Formulate the compressible Euler equations in divergence form 
+\begin{align*}
+	u_t+f(u)_x + g(u)_y =0 
+\end{align*}
+and explicitly state the fluxes f, g.
+\\
+\\
+\textbf{Lösung:}
+
+Die kompressiblen Euler Gleichungen sind gegeben durch:
+\begin{align*}
+	\varrho_t+ \nabla \  \circ \ (\varrho v)&=0\\
+	(\varrho v)_t+ \nabla \  \circ \ (\varrho vv^T + pI)&=0\\
+	E_t + \nabla \ \circ \ [(E+p)v]&=0
+\end{align*}
+Da $v=(v_1,v_2)^T$ gilt, sind die Gleichungen äquivalent zu
+\begin{align*}
+	\varrho_t+ (\varrho v_1)_x + (\varrho v_1)_y  &=0\\
+	(\varrho v_1)_t+ (\varrho v_1^2 + p)_x + (\varrho v_1 v_2)_y &=0\\
+	(\varrho v_2)_t+ (\varrho v_1 v_2 )_x + (\varrho v_2^2 + p)_y &=0\\
+	E_t + [(E+p)v_1]_x + [(E+p)v_2]_y&=0
+\end{align*}
+Damit lässt sich die Divergenzform aufstellen:
+\begin{align*}
+	\left(\begin{array}{c} \varrho \\ \varrho v_1 \\ \varrho v_2 \\ E \end{array}\right)_t	+  \left(\begin{array}{c} \varrho v_1 \\ \varrho v_1^2 + p \\ \varrho v_1 v_2 \\ (E+p)v_1 \end{array}\right)_x +  \left(\begin{array}{c} \varrho v_2 \\ \varrho v_1 v_2 \\ \varrho v_2^2+p \\ (E+p)v_2 \end{array}\right)_y = 0
+\end{align*}
+
+\qed
+
+
+\textbf{Aufgabe 2}
+\\
+Write the equations in their quasi-linear form
+\begin{align*}
+	u_t+Au_x + Bu_y =0 
+\end{align*}
+and find the eigenvalues of flux Jacobian matrices A, B. Explain why
+the maximum eigenvalue is important in the explicit time integration.
+\\
+\\
+\textbf{Lösung:}
+Sei $u=(u_1,u_2,u_3,u_4)^T=(\varrho , \varrho v_1, \varrho v_2, E)^T$. \\
+Dann gilt 
+\begin{align*}
+	p&=(\gamma -1)(E+\frac{\varrho}{2} ||v||^2)
+	=(\gamma -1)(E+\frac{\varrho}{2} (v_1^2+v_2^2))
+	=(\gamma -1)(u_4+ \frac{u_2^2}{2 u_1}+\frac{u_3^2}{2 u_1} )
+\end{align*}
+und 
+\begin{align*}
+	f=\left(\begin{array}{c} \varrho v_1 \\ \varrho v_1^2 + p \\ \varrho v_1 v_2 \\ (E+p)v_1 \end{array}\right)= \left(\begin{array}{c} u_2 \\ \frac{u_2^2}{u_1} + p \\ \frac{u_2 u_3}{u_1} \\ \frac{u_2}{u_1} (u_4+p) \end{array}\right)\\
+	g=\left(\begin{array}{c} \varrho v_2 \\ \varrho v_1 v_2 \\ \varrho v_2^2+p \\ (E+p)v_2 \end{array}\right)=
+	\left(\begin{array}{c} u_3 \\ \frac{u_2 u_3}{u_1} \\ \frac{u_3^2}{u_1} + p \\ \frac{u_3}{u_1} (u_4+p) \end{array}\right)
+\end{align*}
+
+Insgesamt ergeben sich die Matrizen $A=\frac{\partial f}{\partial u}$ und $B=\frac{\partial g}{\partial u}$
+
+\begin{align*}
+	A=
+	\scalemath{0.8}{
+		=\begin{pmatrix}
+			0 & 1 & 0 & 0\\
+			-(\frac{u_2}{u_1})^2- (\gamma -1) \left[\frac{u_2^2}{2 u_1^2}+\frac{u_3^2}{2 u_1^2}\right]    & \frac{2 u_2}{u_1} - (\gamma - 1)\frac{u_2}{u_1} &  (\gamma - 1) \frac{u_3}{u_1} & (\gamma - 1) \\
+			-\frac{u_2 u_3}{u_1^2} & \frac{u_3}{u_1} & \frac{u_2}{u_1} & 0 \\
+			-\frac{u_2 u_4}{u_1^2}-\frac{u_2}{u_1^2}(\gamma -1) \left(u_4+\frac{u_2^2+u_3^2}{2u_1}\right) - \frac{u_2}{u_1}(\gamma - 1) \frac{u_2^2+u_3^2}{2u_1^2} & 
+			\frac{u_4}{u_1}+\frac{1}{u_1}(\gamma - 1) (u_4+ \frac{u_2^2+ u_3^2}{2 u_1}) + (\gamma - 1) (\frac{u_2}{u_1})^2
+			& (\gamma - 1) \frac{u_2 u_3}{u_1^2} & \frac{u_2}{u_1} - (\gamma - 1) \frac{u_2}{u_1} 
+	\end{pmatrix} }
+\end{align*}
+
+\begin{align*}
+	B
+	\scalemath{0.8}{
+		=\begin{pmatrix}
+			0 & 0 & 1 & 0\\
+			-\frac{u_2 u_3}{u_1^2}  & \frac{u_3}{u_1} &   \frac{u_2}{u_1} & 0\\
+			-(\frac{u_3}{u_1})^2- (\gamma -1) \left[\frac{u_2^2}{2 u_1^2}+\frac{u_3^2}{2 u_1^2}\right]  & (\gamma - 1 ) \frac{u_2}{u_1}& \frac{2 u_3}{u_1} + (\gamma - 1)\frac{u_3}{u_1} & ( \gamma - 1) \\
+			-\frac{u_3  u_4}{u_1^2}-\frac{u_3}{u_1^2}(\gamma -1) \left(u_4+\frac{u_2^2+u_3^2}{2u_1}\right) - \frac{u_3}{u_1}(\gamma - 1) \frac{u_2^2+u_3^2}{2u_1^2} &  (\gamma - 1) \frac{u_2 u_3}{u_1^2}
+			& \frac{u_4}{u_1}+\frac{1}{u_1}(\gamma - 1) (u_4+ \frac{u_2^2+ u_3^2}{2 u_1}) + (\gamma - 1) (\frac{u_3}{u_1})^2  & \frac{u_3}{u_1} - (\gamma - 1) \frac{u_3}{u_1} 
+	\end{pmatrix} }
+\end{align*}
+
+Die Schallgeschwindigkeit ist gegeben durch $c=\sqrt{\frac{\gamma p}{\varrho}}$
+Die Eigenwerte von A sind gegeben durch:
+\begin{align*}
+	\lambda_1=v_1 - c ,\lambda_2 = \lambda_3 = v_1 , \lambda_4 = v_1 + c
+\end{align*}
+
+Und die von B durch:
+\begin{align*}
+	\lambda_1=v_2- c ,\lambda_2 = \lambda_3 = v_2 , \lambda_4 = v_2 + c
+\end{align*}
+
+TODO: Noch einfügen, warum max EV wichtig für Zeitint. Gute Begründung aus alten Projekten nehmen!
+
+\qed
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
