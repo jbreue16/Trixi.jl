@@ -27,10 +27,10 @@ end
 
 max_abs_eigenvalue(u, equation::EquationLinearEuler2D) = sqrt(equation.λ / equation.ρ)
 
-struct EquationComprEuler2D{L}
-    γ::L
 
-    EquationComprEuler2D{L} = new{typeof(γ)}(γ)
+struct EquationComprEuler2D{R}
+    γ::R
+    EquationComprEuler2D(γ) = new{typeof(γ)}(γ)
 end
 
 
@@ -46,8 +46,8 @@ end
 function max_abs_eigenvalue(u, equation::EquationComprEuler2D) 
     v1=u[2]/u[1]
     v2=u[3]/u[1]
-    p = (equation.γ - 1)(u[4] + u[2]^2 / (2u[1]) + u[3]^2 / (2u[1]))
-    c = sqrt(equation.γ p / u[1])
+    p = (equation.γ - 1)(u[4] + u[2] * u[2] / (2u[1]) + u[3] * u[3] / (2u[1]))
+    c = sqrt(equation.γ * p / u[1])
 
     # Da c>0 muss nur v1/2 + c betrachtet werden 
     return max(v1+c,v2+c)
