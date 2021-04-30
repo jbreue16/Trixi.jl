@@ -1,81 +1,95 @@
 
 using OrdinaryDiffEq
 using Trixi
-using Plots
 
 ###############################################################################
 # semidiscretization of the compressible Euler equations
 
 equations = CompressibleEulerEquations2D(1.4)
 
-initial_condition = initial_condition_blast_wave
-
-surface_flux = flux_lax_friedrichs
-volume_flux  = flux_chandrashekar
-basis = LobattoLegendreBasis(3)
-indicator_sc = IndicatorHennemannGassner(equations, basis,
-                                         alpha_max=0.5,
-                                         alpha_min=0.001,
-                                         alpha_smooth=true,
-                                         variable=density_pressure)
-volume_integral = VolumeIntegralShockCapturingHG(indicator_sc;
-                                                 volume_flux_dg=volume_flux,
-                                                 volume_flux_fv=surface_flux)
-solver = DGSEM(basis, surface_flux, volume_integral)
-
-coordinates_min = (-2, -2)
-coordinates_max = ( 2,  2)
-mesh = TreeMesh(coordinates_min, coordinates_max,
-                initial_refinement_level=6,
-                n_cells_max=10_000)
+# copied from EUlerEquation2D to do modifications 
+function WR2_initial_condition_convergence_test(x, t, equations::CompressibleEulerEquations2D)
+    c = 2
+    A = 0.1
+    L = 2
+    f = 1/L
+    ω = 2 * pi * f
+    ini = c + A * sin(ω * (x[1] + x[2] - t))
+  
+    rho = ini
+    rho_v1 = ini
+    rho_v2 = ini
+    rho_e = ini^2
+  
+    return SVector(rho, rho_v1, rho_v2, rho_e)
+  end
+initial_condition = WR2_initial_condition_convergence_test
 
 
+#coordinates neccessary for periodic solution with periodic boundaries
+coordinates_min = (0.0, 0.0)
+coordinates_max = ( 2.0,  2.0)
+ # surface flux is actually the rusanov/local lax friedrichs flux
+solver = DGSEM(polydeg = 3, surface_flux=flux_lax_friedrichs)
+
+
+cells_per_dimension = (4, 4)
+
+mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max)
+            
 semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver)
-
-
-###############################################################################
+            
+            # semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver,
+            #                                     source_terms=source_terms_convergence_test)
+            
+            
+            ###############################################################################
 # ODE solvers, callbacks etc.
-
-tspan = (0.0, 12.5)
+            
+# timespan for periodic solution
+ tspan = (0.0, 2.0)
 ode = semidiscretize(semi, tspan)
+# summary_callback = SummaryCallback()
+analysis_interval = 1000
+            
+analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_analysis=true,
+                                      extra_analysis_errors=(:conservation_error,),
+                                     #  extra_analysis_integrals=(entropy, energy_total,
+                                     #                            energy_kinetic, energy_internal)
+                                     
+                                     )           
+# alive_callback = AliveCallback(analysis_interval=analysis_interval)
+# save_solution = SaveSolutionCallback(interval=100,
+#                                      save_initial_solution=true,
+#                                      save_final_solution=true,
+#                                      solution_variables=cons2prim)
+            
+stepsize_callback = StepsizeCallback(cfl=0.5)
+            
+callbacks = CallbackSet(
+                        # summary_callback,
+                        analysis_callback,
+                        # alive_callback,
+                        # save_solution,
+                        stepsize_callback)
+            
+ ###############################################################################
+ # run the simulation            
+                        
 
-summary_callback = SummaryCallback()
-
-analysis_interval = 100
-analysis_callback = AnalysisCallback(semi, interval=analysis_interval)
-
-alive_callback = AliveCallback(analysis_interval=analysis_interval)
-
-save_solution = SaveSolutionCallback(interval=100,
-                                     save_initial_solution=true,
-                                     save_final_solution=true,
-                                     solution_variables=cons2prim)
-
-amr_indicator = IndicatorHennemannGassner(semi,
-                                          alpha_max=0.5,
-                                          alpha_min=0.001,
-                                          alpha_smooth=true,
-                                          variable=density_pressure)
-amr_controller = ControllerThreeLevel(semi, amr_indicator,
-                                      base_level=4,
-                                      max_level =6, max_threshold=0.01)
-amr_callback = AMRCallback(semi, amr_controller,
-                           interval=5,
-                           adapt_initial_condition=true,
-                           adapt_initial_condition_only_refine=true)
-
-stepsize_callback = StepsizeCallback(cfl=0.9)
-
-callbacks = CallbackSet(summary_callback,
-                        analysis_callback, alive_callback, 
-                        save_solution,
-                        amr_callback, stepsize_callback)
-
-
-###############################################################################
-# run the simulation
-
+            
+            
 sol = solve(ode, CarpenterKennedy2N54(williamson_condition=false),
-            dt=1.0, # solve needs some value here but it will be overwritten by the stepsize_callback
-            save_everystep=false, callback=callbacks);
-summary_callback() # print the timer summary
+             dt=1.0, # solve needs some value here but it will be overwritten by the stepsize_callback
+             save_everystep=false, callback=callbacks);
+ # summary_callback() # print the timer summary
+            
+
+
+# built in convergence analysis doesnt work yet
+# default_example() = joinpath(examples_dir(), "2d", "elixir_advection_basic.jl")
+# convergence_test(default_example(), 4)
+
+#   "c:\\Users\\jmbr2\\git\\TrixiFork\\Trixi.jl\\src\\WR2\\milestone1.jl"
+# convergence_test("c:\\Users\\jmbr2\\git\\TrixiFork\\Trixi.jl\\src\\WR2\\milestone1.jl", 4)
+
