@@ -37,7 +37,7 @@ cells_per_dimension = (4, 4)
 
 mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max)
             
-semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver)
+semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver, source_terms=source_terms_convergence_test)
             
             # semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver,
             #                                     source_terms=source_terms_convergence_test)
