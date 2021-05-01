@@ -3,6 +3,12 @@ using OrdinaryDiffEq
 using Trixi
 
 ###############################################################################
+# FOR EXECUTION:
+#   "c:\\Users\\jmbr2\\git\\TrixiFork\\Trixi.jl\\src\\WR2\\milestone1.jl"
+# convergence_test("c:\\Users\\jmbr2\\git\\TrixiFork\\Trixi.jl\\src\\WR2\\milestone1.jl", 4)
+polydeg = 3
+
+###############################################################################
 # semidiscretization of the compressible Euler equations
 
 equations = CompressibleEulerEquations2D(1.4)
@@ -30,7 +36,7 @@ initial_condition = WR2_initial_condition_convergence_test
 coordinates_min = (0.0, 0.0)
 coordinates_max = ( 2.0,  2.0)
  # surface flux is actually the rusanov/local lax friedrichs flux
-solver = DGSEM(polydeg = 3, surface_flux=flux_lax_friedrichs)
+solver = DGSEM(polydeg = polydeg, surface_flux=flux_lax_friedrichs)
 
 
 cells_per_dimension = (4, 4)
@@ -84,12 +90,4 @@ sol = solve(ode, CarpenterKennedy2N54(williamson_condition=false),
              save_everystep=false, callback=callbacks);
  # summary_callback() # print the timer summary
             
-
-
-# built in convergence analysis doesnt work yet
-# default_example() = joinpath(examples_dir(), "2d", "elixir_advection_basic.jl")
-# convergence_test(default_example(), 4)
-
-#   "c:\\Users\\jmbr2\\git\\TrixiFork\\Trixi.jl\\src\\WR2\\milestone1.jl"
-# convergence_test("c:\\Users\\jmbr2\\git\\TrixiFork\\Trixi.jl\\src\\WR2\\milestone1.jl", 4)
 

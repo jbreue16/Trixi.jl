@@ -37,7 +37,7 @@ coordinates_max = ( 2.0,  2.0)
 #                                 xspan=(0, 1), tspan=(0, 1), CFL=1.0, latex=false)
     # reset_timer!()
     
-    N_vec = [5, 6]
+    N_vec = [3, 4]
     Nq_vec =[1, 2, 4, 8, 16]
 
     # Table preparation
