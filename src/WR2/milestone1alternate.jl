@@ -41,25 +41,25 @@ coordinates_max = ( 2.0,  2.0)
     Nq_vec =[1, 2, 4, 8, 16]
 
     # Table preparation
-    # kwargs = Dict{Symbol, Any}(
-    #     :formatters => (
-    #         ft_printf("%.5e", [2]),
-    #         ft_printf("%.2f", [3])
-    #     )
-    # )
-    # latex=false
-    # if latex
-    #     kwargs[:backend] = :latex
-    #     kwargs[:highlighters] = LatexHighlighter(
-    #         (data, i, j) -> j > 1,
-    #         (data, i, j, str) -> "\$\\num{$str}\$"
-    #     )
-    # end
+    kwargs = Dict{Symbol, Any}(
+        :formatters => (
+            ft_printf("%.5e", [2]),
+            ft_printf("%.2f", [3])
+        )
+    )
+    latex = false
+    if latex
+        kwargs[:backend] = :latex
+        kwargs[:highlighters] = LatexHighlighter(
+            (data, i, j) -> j > 1,
+            (data, i, j, str) -> "\$\\num{$str}\$"
+        )
+    end
 
     error = Vector{Float64}(undef, length(Nq_vec))
     for N in N_vec
       # surface flux is actually the rusanov/local lax friedrichs flux
-      solver = DGSEM(polydeg=N, surface_flux=flux_lax_friedrichs)
+      solver = DGSEM(polydeg=N, surface_flux=flux_lax_friedrichs, volume_integral = VolumeIntegralWeakForm() )
         for j in eachindex(Nq_vec)
             Nq = Nq_vec[j]
 
@@ -101,7 +101,7 @@ coordinates_max = ( 2.0,  2.0)
             
             callbacks = CallbackSet(
                                     # summary_callback,
-                                    analysis_callback,
+                                    # analysis_callback,
                                     # alive_callback,
                                     # save_solution,
                                     stepsize_callback)
@@ -141,7 +141,7 @@ coordinates_max = ( 2.0,  2.0)
             log(Nq_vec[j]/Nq_vec[j+1]) for j in 1:length(Nq_vec)-1])
         println("N = $N")
 
-        pretty_table(hcat(Nq_vec, error, eoc), ["Nq", "Error", "EOC"])#; kwargs...)
+        pretty_table(hcat(Nq_vec, error, eoc), ["Nq", "Error", "EOC"]; kwargs...)
 
         mean = sum(eoc[2:end])/(length(Nq_vec) - 1)
         @printf("Mean EOC: %.2f\n", mean)
