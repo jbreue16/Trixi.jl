@@ -19,6 +19,15 @@ struct VolumeIntegralWeakForm <: AbstractVolumeIntegral end
 create_cache(mesh, equations, ::VolumeIntegralWeakForm, dg, uEltype) = NamedTuple()
 
 """
+    VolumeIntegralStrongForm
+
+The equivalent strong form volume integral
+"""
+struct VolumeIntegralStrongForm <: AbstractVolumeIntegral end
+
+create_cache(mesh, equations, ::VolumeIntegralStrongForm, dg, uEltype) = NamedTuple()
+
+"""
     VolumeIntegralFluxDifferencing
 
 Volume integral type for DG methods based on SBP operators and flux differencing using
