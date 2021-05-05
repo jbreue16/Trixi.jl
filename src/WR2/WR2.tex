@@ -1,122 +1,136 @@
-\documentclass[a4paper,DIV8,10pt]{scrartcl}
 
+
+
+
+\documentclass[11pt]{scrartcl}
+
+%-------------------------------------------------------------------------------------------
+% Präambel
+%-------------------------------------------------------------------------------------------
+
+% Pakete zur Verwendung der europäischen Schriftarten sowie der deutschen Sprache
+\usepackage[ngerman]{babel}
 \usepackage[T1]{fontenc}
-\usepackage{geometry}
-\geometry{left=3cm,right=3cm,top=3cm,bottom=3cm,bindingoffset=5mm}
+\usepackage[utf8]{inputenc}
 
-  \usepackage{german}    % fuer die deutschen Trennmuster
-  \usepackage{ngerman} % entsprechend fuer die neue Rechtschreibung
-  \usepackage[latin1]{inputenc} % falls Sie Umlaute in den Quellen verwenden wollen
-  \usepackage{amsmath}   % enthaelt nuetzliche Makros fuer Mathematik
-  \usepackage{amsthm}    % fuer Saetze, Definitionen, Beweise, etc.
-  \usepackage{amsfonts}  % spezielle AMS-Mathematik-Fonts
-  \usepackage{relsize}   % fuer \smaller 
-  \usepackage{tikz}      % fuer Graphiken
-  \usepackage[]{ragged2e}
-  \usepackage{hyperref}
-  \usepackage{url}
-  \usepackage{amsmath}
+
+% Pakete zur Vewendung mathematischer Umgebungen und Symbole
+\usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{mathtools}
+\usepackage{amsthm}
+
+% Paket zum Einbinden von Graphiken und Bildern
 \usepackage{graphicx}
-\usepackage{float}
-\usepackage{stmaryrd}
 
- \def\Gleich#1{\stackrel{\text{\makebox[0pt]{#1}}}{=}} 
-  
-  \newcommand{\N}{\ensuremath{\mathbb{N}}}   % natuerliche Zahlen
-  \newcommand{\Z}{\ensuremath{\mathbb{Z}}}   % ganze Zahlen
-  \newcommand{\Q}{\ensuremath{\mathbb{Q}}}   % rationale Zahlen
-  \newcommand{\R}{\ensuremath{\mathbb{R}}}   % reelle Zahlen
-    \newcommand\scalemath[2]{\scalebox{#1}{\mbox{\ensuremath{\displaystyle #2}}}}
-\definecolor{darkcerulean}{rgb}{0.03, 0.27, 0.49}
-
-  \theoremstyle{definition}
-  \newtheorem{satz}{Satz}[section]
-  \newtheorem{lemma}[satz]{Lemma}
-  \newtheorem{korollar}[satz]{Korollar}
-  \newtheorem{definition}[satz]{Definition}
-  \newtheorem{bemerkung}[satz]{Bemerkung}
-  \newtheorem{aufgabe}[satz]{Aufgabe}
-  \newenvironment{beweis}%
-    {\begin{proof}[Beweis]}
-    {\end{proof}}
-  \newtheorem{beispiel}[satz]{Beispiel}
-
-  \renewcommand{\labelitemi}{--}             % aendert die Symbole bei unnumerierten Aufzaehlungen
-  \makeatletter                              % Fussnote ohne Symbol
-    \def\blfootnote{\xdef\@thefnmark{}\@footnotetext}
-  % Titel des Handouts
-  %   #1 Name des Vortragenden
-  %   #2 email-Adresse 
-  %   #3 Datum des Vortrags
-  %   #4 Titel des Vortrags
-  \newcommand{\handouttitle}[4]
-   {\begin{center}
-      \large #4
-    \end{center}
-
-    \bigskip
-
-    \noindent
-    #1 (\textsf{#2})
-    \hfill
-    #3
-
-  
-    \noindent
-    \rule{\linewidth}{.5pt}
-
-    \bigskip
-
-    \@afterindentfalse\@afterheading
-   }
-  \makeatother
-  \renewcommand{\sectfont}{\normalfont}       % aendert den Font fuer Ueberschriften
+% Paket zur Verwendung nummerierter Auflistungen
+\usepackage{enumerate}
 
 
+% Paket zum unmittelbaren Erzwingen von Abbildungspositionen
+\usepackage{here}
 
-%----------------------------------------------------------------------------------------------------------------------------------------------
+% Paket zur Verwendung einer verbesserten Schriftart
+\usepackage{lmodern}
+
+% Paket zur besseren Implementierung von Code in den Fließtext
+\usepackage{fancyvrb}
+
+% Paket zur Verlinkung der Labels und des Inhaltsverzeichnisses
+\usepackage[plainpages=false]{hyperref}
+
+
+% Paket zum Verwenden gewisser mathematischer Symbole
+\usepackage{mathtools}
+\usepackage{stmaryrd} %ZB \rrbracket \llbracket
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+\usepackage{graphicx}
+
+% Paket zur Verwendung nummerierter Auflistungen
+\usepackage{enumerate}
+
+% Paket zur Verwendung einer verbesserten Schriftart
+\usepackage{lmodern}
+
+% for matrices to fit the page
+\newcommand\scalemath[2]{\scalebox{#1}{\mbox{\ensuremath{\displaystyle #2}}}}
+
+\usepackage{siunitx}
+
+% Umgebung fuer die Aufgabenbeschreibung
+\newtheorem {Aufgabe}{Aufgabe}
+
+% Formatierung der Seiten
+\oddsidemargin=0.in
+\topmargin=-1.5cm
+\textheight=23cm
+\textwidth=16cm
+
+
+% Einrücken von neuen Zeilen ausschalten
+\setlength{\parindent}{0cm}
+
+
 \begin{document}
 
-\handouttitle
-{Wissenschaftliches Rechnen II}
-{SS21}
-{\today}
-
 %-------------------------------------------------------------------------------------------
-% Inhaltsverzeichnis
+% Deckblatt
 %-------------------------------------------------------------------------------------------
 
-% Erstellung des Inhaltsverzeichnisses auf einer neuen Seite
+% Umnummerierung des Decksblatts zum fehlerfreien Gebrauch des hyperref- Pakets
+\pagenumbering{Alph}
+
+% Setzen von Titel, Autor und Datum auf dem Deckblatt
+\title{{\Huge The Chipmunk Adventure} \\[18pt]
+Wissenschaftliches Rechnen II \\[18pt]}
+\author{ \textbf{Teamname} \\
+Jan Breuer\\
+Mats Lerho \\
+Henrik }
+\date{\today}
+
+% Erzeugung des Deckblatt
+\maketitle
+
+% Weitere Angaben (Arbeitsgruppe, Institut, Universität, Betreuung usw.)
+%\begin{center} 
+%\begin{Large}
+%Mathematisches Institut \\[3pt]
+%Mathematisch-Naturwissenschaftliche Fakultät \\[3pt]
+%Universität zu Köln \\[3cm]
+%Betreuung: Prof. Dr.-Ing. Gregor Gassner
+%\end{Large}
+%\end{center}
+
+% Unterdrücken der Seitennummerierung
+\thispagestyle{empty}
+
+
+%-------------------------------------------------------------------------------------------
+% 
+%-------------------------------------------------------------------------------------------
+
+\newpage
 \tableofcontents
-
-% Umstellung der Seitennummerierung auf kleine r�mische Ziffern
-\pagenumbering{roman}
-
-
-%% F�r das Einsetzen einer Leerseite soll dieser Code auskommentiert werden
-%\newpage
-%\thispagestyle{empty}
-%\hspace{1cm}
-
+\thispagestyle{empty}
 \newpage
 
 % Umstellung der Seitennummerierung auf arabische Ziffern
 \pagenumbering{arabic}
-
 \section{Meilenstein 1}
+To have a good foundation for the subsequent milestones, we focus on the Euler equations which have the vector of conservative variables $u=(\rho, \rho v1, \rho v2, E)^T$. In particular, we concentrate on the implementation of the standard strongform DGSEM in $2$D for a Cartesian (not necessarily square shaped) block.
+\subsection{Divergenzform}
 
-\textbf{Aufgabe 1}
-\\
-Formulate the compressible Euler equations in divergence form 
+1. Formulate the compressible Euler equations in divergence form 
 \begin{align*}
 	u_t+f(u)_x + g(u)_y =0 
 \end{align*}
 and explicitly state the fluxes f, g.
 \\
 \\
-\textbf{L�sung:}
+\textbf{Lösung:}
 
 Die kompressiblen Euler Gleichungen sind gegeben durch:
 \begin{align*}
@@ -124,24 +138,24 @@ Die kompressiblen Euler Gleichungen sind gegeben durch:
 	(\varrho v)_t+ \nabla \  \circ \ (\varrho vv^T + pI)&=0\\
 	E_t + \nabla \ \circ \ [(E+p)v]&=0
 \end{align*}
-Da $v=(v_1,v_2)^T$ gilt, sind die Gleichungen �quivalent zu
+Da $v=(v_1,v_2)^T$ gilt, sind die Gleichungen äquivalent zu
 \begin{align*}
 	\varrho_t+ (\varrho v_1)_x + (\varrho v_1)_y  &=0\\
 	(\varrho v_1)_t+ (\varrho v_1^2 + p)_x + (\varrho v_1 v_2)_y &=0\\
 	(\varrho v_2)_t+ (\varrho v_1 v_2 )_x + (\varrho v_2^2 + p)_y &=0\\
 	E_t + [(E+p)v_1]_x + [(E+p)v_2]_y&=0
 \end{align*}
-Damit l�sst sich die Divergenzform aufstellen:
+Damit lässt sich die Divergenzform aufstellen:
 \begin{align*}
 	\left(\begin{array}{c} \varrho \\ \varrho v_1 \\ \varrho v_2 \\ E \end{array}\right)_t	+  \left(\begin{array}{c} \varrho v_1 \\ \varrho v_1^2 + p \\ \varrho v_1 v_2 \\ (E+p)v_1 \end{array}\right)_x +  \left(\begin{array}{c} \varrho v_2 \\ \varrho v_1 v_2 \\ \varrho v_2^2+p \\ (E+p)v_2 \end{array}\right)_y = 0
 \end{align*}
 
 \qed
+\newline
+\noindent 
+\subsection{quasilineare Form}
 
-
-\textbf{Aufgabe 2}
-\\
-Write the equations in their quasi-linear form
+2. Write the equations in their quasi-linear form
 \begin{align*}
 	u_t+Au_x + Bu_y =0 
 \end{align*}
@@ -149,7 +163,7 @@ and find the eigenvalues of flux Jacobian matrices A, B. Explain why
 the maximum eigenvalue is important in the explicit time integration.
 \\
 \\
-\textbf{L�sung:}
+\textbf{Lösung:}
 Sei $u=(u_1,u_2,u_3,u_4)^T=(\varrho , \varrho v_1, \varrho v_2, E)^T$. \\
 Dann gilt 
 \begin{align*}
@@ -169,7 +183,7 @@ Insgesamt ergeben sich die Matrizen $A=\frac{\partial f}{\partial u}$ und $B=\fr
 \begin{align*}
 	A=
 	\scalemath{0.8}{
-		=\begin{pmatrix}
+		\begin{pmatrix}
 			0 & 1 & 0 & 0\\
 			-(\frac{u_2}{u_1})^2- (\gamma -1) \left[\frac{u_2^2}{2 u_1^2}+\frac{u_3^2}{2 u_1^2}\right]    & \frac{2 u_2}{u_1} - (\gamma - 1)\frac{u_2}{u_1} &  (\gamma - 1) \frac{u_3}{u_1} & (\gamma - 1) \\
 			-\frac{u_2 u_3}{u_1^2} & \frac{u_3}{u_1} & \frac{u_2}{u_1} & 0 \\
@@ -180,9 +194,9 @@ Insgesamt ergeben sich die Matrizen $A=\frac{\partial f}{\partial u}$ und $B=\fr
 \end{align*}
 
 \begin{align*}
-	B
+	B =
 	\scalemath{0.8}{
-		=\begin{pmatrix}
+		\begin{pmatrix}
 			0 & 0 & 1 & 0\\
 			-\frac{u_2 u_3}{u_1^2}  & \frac{u_3}{u_1} &   \frac{u_2}{u_1} & 0\\
 			-(\frac{u_3}{u_1})^2- (\gamma -1) \left[\frac{u_2^2}{2 u_1^2}+\frac{u_3^2}{2 u_1^2}\right]  & (\gamma - 1 ) \frac{u_2}{u_1}& \frac{2 u_3}{u_1} + (\gamma - 1)\frac{u_3}{u_1} & ( \gamma - 1) \\
@@ -202,15 +216,102 @@ Und die von B durch:
 	\lambda_1=v_2- c ,\lambda_2 = \lambda_3 = v_2 , \lambda_4 = v_2 + c
 \end{align*}
 
-TODO: Noch einf�gen, warum max EV wichtig f�r Zeitint. Gute Begr�ndung aus alten Projekten nehmen!
-
 \qed
+
+TODO: Noch einfügen, warum max EV wichtig für Zeitint. Gute Begründung aus alten Projekten nehmen!
+
+Um ein stabiles Verfahren zu erhalten, ist die Relation $\Delta t \sim \Delta x $ gemäß der CFL-Bedingung notwendig. Dabei wird die Systemgeschwindigkeit über den maximalen Eigenwert der System Matrizen, hier $A$ und $B$, abgeschätzt. 
+
+\subsection{Standard DGSEM Verification}
+3. Implement the standard strong form of the DGSEM for the compress-ible Euler equations on two-dimensional Cartesian meshes as you al-ready did in the previous course "Wissenschaftliches Rechnen I". Youcan also re-use the five stage, fourth order Runge-Kutta method aswell as the simple local Lax-Friedrichs Riemann solver. For now, the boundary conditions can be assumed to be periodic. \\
+4. Verify the high-order convergence rate of the Standard DG version, as you did in the previous semester, for the two polynomial degrees N=3 and N=4. \\
+\newline
+\textbf{Lösung:} \\
+Konvergenztabellen für das standard DGSEM.
+
+\begin{table}[H]
+\parbox{.45\linewidth}{
+\centering
+    \begin{tabular}{|r|r|r|}
+    \hline\hline
+    \textbf{Nq} & \textbf{Error} & \textbf{EOC} \\\hline
+    2 & $\num{6.42854e-02}$ & $\num{}$ \\
+    4 & $\num{1.32856e-02}$ & $\num{2.27}$ \\
+    8 & $\num{8.78254e-04}$ & $\num{3.92}$ \\
+    16 & $\num{4.49618e-05}$ & $\num{4.29}$ \\
+    32 & $\num{2.92247e-06}$ & $\num{3.94}$ \\\hline\hline
+  \end{tabular} 
+  \caption{N = $3$}
+  }
+  \parbox{.45\linewidth}{
+	\centering
+    \begin{tabular}{|r|r|r|}
+    \hline\hline
+    \textbf{Nq} & \textbf{Error} & \textbf{EOC} \\\hline
+    2 & $\num{2.38883e-02}$ & $\num{}$ \\
+    4 & $\num{1.14360e-03}$ & $\num{4.38}$ \\
+    8 & $\num{4.22035e-05}$ & $\num{4.76}$ \\
+    16 & $\num{2.07943e-06}$ & $\num{4.34}$ \\
+    32 & $\num{8.93401e-08}$ & $\num{4.54}$ \\\hline\hline
+  \end{tabular}
+   \caption{N = $4$}
+  }
+\end{table}
+
+\newpage
+\section{Meilenstein 2}
+As we know, a scheme has to satisfy a certain amount of requirements toguarantee convergence to a physical correct and unique solution. In the lastsemester, we have constructed so-called entropy stable discretisations, whichmeans that the discrete mathematical entropy is a non-increasing quantity.These entropy stable discretisations satisfy the fundamental second law ofthermodynamics, which brings us closer to our goal to construct a physicalcorrect solution. As we have seen in the previous course, numerical experi-ments clearly demonstrate an improved robustness of the discretisation.For this portion of the project, we focus on the implementation of theDGSEM for the split form of the equations.
+\subsection{Chandrashekar split form}
+1. Replace the divergence form of the volume integral with the Chandrashekar split form (eq.  (3.20) in [1]) by exchanging the volumenumerical fluxes $F^\#$,$G^\#$. This way the Riemann solver also changes, though the data transfer does not. For the standard DGSEM the local Lax-Friedrichs method in the $x$-direction is 
+\begin{align}
+F^{\star} =\frac{1}{2}- \lambda_{max} \ 2 \ \llbracket \underline{u} \rrbracket
+\end{align}
+whereas for the split form approximations the Riemann solver is coupled to the split form
+\begin{align}
+ F^{\star} = F^\#_{\text{Chandrashekar}} - \lambda_{max} \ 2 \ \llbracket \underline{u} \rrbracket
+\end{align}
+2. Verify the high order convergence rate as well as the entropy-conservation and entropy-stabilisation properties of the split form scheme. \\
+\newline
+\textbf{Lösung:} \\
+Konvergenztabellen für das Split-Form DGSEM mit Chandrashekar Fluss.
+
+\begin{table}[H]
+\parbox{.45\linewidth}{
+\centering
+    \begin{tabular}{|r|r|r|}
+    \hline\hline
+    \textbf{Nq} & \textbf{Error} & \textbf{EOC} \\\hline
+    2 & $\num{6.87889e-02}$ & $\num{}$ \\
+    4 & $\num{1.42021e-02}$ & $\num{2.28}$ \\
+    8 & $\num{8.05405e-04}$ & $\num{4.14}$ \\
+    16 & $\num{3.93625e-05}$ & $\num{4.35}$ \\
+    32 & $\num{2.49788e-06}$ & $\num{3.98}$ \\\hline\hline
+  \end{tabular} 
+  \caption{N = $3$}
+  }
+  \parbox{.45\linewidth}{
+	\centering
+    \begin{tabular}{|r|r|r|}
+    \hline\hline
+    \textbf{Nq} & \textbf{Error} & \textbf{EOC} \\\hline
+    2 & $\num{2.29650e-02}$ & $\num{}$ \\
+    4 & $\num{8.08062e-04}$ & $\num{4.83}$ \\
+    8 & $\num{3.71735e-05}$ & $\num{4.44}$ \\
+    16 & $\num{1.76278e-06}$ & $\num{4.40}$ \\
+    32 & $\num{7.82467e-08}$ & $\num{4.49}$ \\\hline\hline
+  \end{tabular}
+   \caption{N = $4$}
+  }
+\end{table}
+
+
 
 \end{document}
 
 
 
-
+%  
+%
 
 
 

@@ -5,9 +5,11 @@ using Printf
 using PrettyTables
 
 ######### EINSTELLUNGEN ############
-N_vec = [ 1, 2, 3, 4]
-Nq_vec = [2, 4, 8 , 16]
+N_vec = [3, 4]
+Nq_vec = [2, 4, 8, 16, 32]
 CFL = 0.9
+latex = true
+# uncomment analysis_callback to get enrtopy/energy analysis
 
 surface_flux = flux_lax_friedrichs
 volume_flux  = flux_chandrashekar
@@ -51,7 +53,7 @@ kwargs = Dict{Symbol,Any}(
             ft_printf("%.2f", [3])
         )
     )
-latex = false
+
 if latex
     kwargs[:backend] = :latex
     kwargs[:highlighters] = LatexHighlighter(
@@ -89,8 +91,8 @@ for N in N_vec
             
         analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_analysis=true,
                                                  extra_analysis_errors=(:conservation_error,),
-                                                #  extra_analysis_integrals=(entropy, energy_total,
-                                                #                            energy_kinetic, energy_internal)
+                                                 extra_analysis_integrals=(entropy, energy_total,
+                                                                           energy_kinetic, energy_internal)
                                                 
                                                 )
             
