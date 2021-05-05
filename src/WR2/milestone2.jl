@@ -6,7 +6,10 @@ using PrettyTables
 
 ######### EINSTELLUNGEN ############
 N_vec = [3, 4]
-Nq_vec = [1, 2, 4, 8, 16]
+Nq_vec = [2, 4, 8, 16, 32]
+CFL = 0.9
+latex = false
+# uncomment analysis_callback to get enrtopy/energy analysis
 
 surface_flux = flux_lax_friedrichs
 volume_flux  = flux_chandrashekar
@@ -35,20 +38,22 @@ function WR2_initial_condition_convergence_test(x, t, equations::CompressibleEul
 end
 initial_condition = WR2_initial_condition_convergence_test
 
+
 # coordinates neccessary for periodic solution with periodic boundaries
 coordinates_min = (0.0, 0.0)
 coordinates_max = (2.0,  2.0)
 
 ####
+    
 
-# Table preparation
+    # Table preparation
 kwargs = Dict{Symbol,Any}(
         :formatters => (
             ft_printf("%.5e", [2]),
             ft_printf("%.2f", [3])
         )
     )
-latex = false
+
 if latex
     kwargs[:backend] = :latex
     kwargs[:highlighters] = LatexHighlighter(
@@ -62,65 +67,64 @@ for N in N_vec
       
     basis = LobattoLegendreBasis(N)
     solver = DGSEM(basis, surface_flux, volume_integral)
-
+    println(typeof(solver.volume_integral))
+    # solver = DGSEM(polydeg=N, surface_flux=surface_flux, volume_integral=volume_integral)
     for j in eachindex(Nq_vec)
         Nq = Nq_vec[j]
 
         cells_per_dimension = (Nq, Nq)
 
         mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max)
-        #mesh = TreeMesh(coordinates_min, coordinates_max,
-        #        initial_refinement_level=6,
-        #        n_cells_max=10_000)
-
+            
         semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver, source_terms=source_terms_convergence_test)
             
             
-        ###############################################################################
-        # ODE solvers, callbacks etc.
-        
-        # timespan for periodic solution
+            ###############################################################################
+            # ODE solvers, callbacks etc.
+            
+            # timespan for periodic solution
         tspan = (0.0, 2.0)
         ode = semidiscretize(semi, tspan)
             
         summary_callback = SummaryCallback()
-
-        stepsize_callback = StepsizeCallback(cfl=0.9)
+        analysis_interval = 1000
             
-        callbacks = CallbackSet(#summary_callback,
-                                stepsize_callback)
+        analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_analysis=true,
+                                                 extra_analysis_errors=(:conservation_error,),
+                                                 extra_analysis_integrals=(entropy, energy_total,
+                                                                           energy_kinetic, energy_internal)
+                                                
+                                                )
             
-        ###############################################################################
-        # run the simulation
+            # alive_callback = AliveCallback(analysis_interval=analysis_interval)
+            
+            # save_solution = SaveSolutionCallback(interval=100,
+            #                                      save_initial_solution=true,
+            #                                      save_final_solution=true,
+            #                                      solution_variables=cons2prim)
+            
+        stepsize_callback = StepsizeCallback(cfl= CFL)
+            
+        callbacks = CallbackSet(
+                                    # summary_callback,
+                                    # analysis_callback,
+                                    # alive_callback,
+                                    # save_solution,
+                                    stepsize_callback)
+            
+            ###############################################################################
+            # run the simulation
             
         sol = solve(ode, CarpenterKennedy2N54(williamson_condition=false),
                         dt=1.0, # solve needs some value here but it will be overwritten by the stepsize_callback
                         save_everystep=false, callback=callbacks);
         summary_callback() # print the timer summary
             
-            
-
-
-        # dg = DG_2D(N, Nq, length(u0((0.0, 0.0))), equation, riemann_solver; source=source, xspan=xspan)
-        # @timeit_debug "Semidiscretization" ode = semidiscretize(dg, u0; tspan=tspan, CFL=CFL)
-        # @timeit_debug "Solve ODE" sol = solve(ode)
-
-        # Compute exact solution vector
-        # exact = similar(sol)
-        # for element_x in 1:Nq, element_y in 1:Nq
-        #     for node_x in 1:N+1, node_y in 1:N+1
-        #         node_vars = u_solution(dg.elements.node_pos[element_x, element_y, node_x, node_y])
-
-        #         for s in 1:nvariables(dg)
-        #             exact[s, element_x, element_y, node_x, node_y] = node_vars[s]
-        #         end
-        #     end
-        # end
 
         error[j] = maximum(abs.(sol.u[1] - sol.u[2])) # maximum(abs.(exact - sol))
     end
       
-    # Compute EOC
+        # Compute EOC
     eoc = vcat("", [log(error[j + 1] / error[j]) /
             log(Nq_vec[j] / Nq_vec[j + 1]) for j in 1:length(Nq_vec) - 1])
     println("N = $N")

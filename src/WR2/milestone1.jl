@@ -8,7 +8,7 @@ using PrettyTables
 N_vec = [3, 4]
 Nq_vec =[2, 4, 8, 16, 32]
 CFL = 0.9
-latex = true
+latex = false
 # uncomment analysis_callback to get enrtopy/energy analysis
 
 volume_integral = Trixi.VolumeIntegralStrongForm() #dont know why we need to use Trixi. , otherwise wont be recognised
@@ -102,7 +102,7 @@ coordinates_max = ( 2.0,  2.0)
             
             callbacks = CallbackSet(
                                     # summary_callback,
-                                    # analysis_callback,
+                                    analysis_callback,
                                     # alive_callback,
                                     # save_solution,
                                     stepsize_callback)
