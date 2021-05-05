@@ -5,13 +5,14 @@ using Printf
 using PrettyTables
 
 ######### EINSTELLUNGEN ############
-N_vec = [3]
-Nq_vec = [2,4]
+N_vec = [ 1, 2, 3, 4]
+Nq_vec = [2, 4, 8 , 16]
+CFL = 0.9
 
 surface_flux = flux_lax_friedrichs
 volume_flux  = flux_chandrashekar
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
-basis = LobattoLegendreBasis(3)
+
 ###############################################################################
 # semidiscretization of the compressible Euler equations
 
@@ -62,7 +63,7 @@ end
 error = Vector{Float64}(undef, length(Nq_vec))
 for N in N_vec
       
-
+    basis = LobattoLegendreBasis(N)
     solver = DGSEM(basis, surface_flux, volume_integral)
     println(typeof(solver.volume_integral))
     # solver = DGSEM(polydeg=N, surface_flux=surface_flux, volume_integral=volume_integral)
@@ -100,7 +101,7 @@ for N in N_vec
             #                                      save_final_solution=true,
             #                                      solution_variables=cons2prim)
             
-        stepsize_callback = StepsizeCallback(cfl=0.001)
+        stepsize_callback = StepsizeCallback(cfl= CFL)
             
         callbacks = CallbackSet(
                                     # summary_callback,
@@ -117,24 +118,6 @@ for N in N_vec
                         save_everystep=false, callback=callbacks);
         summary_callback() # print the timer summary
             
-            
-
-
-            # dg = DG_2D(N, Nq, length(u0((0.0, 0.0))), equation, riemann_solver; source=source, xspan=xspan)
-            # @timeit_debug "Semidiscretization" ode = semidiscretize(dg, u0; tspan=tspan, CFL=CFL)
-            # @timeit_debug "Solve ODE" sol = solve(ode)
-
-            # Compute exact solution vector
-            # exact = similar(sol)
-            # for element_x in 1:Nq, element_y in 1:Nq
-            #     for node_x in 1:N+1, node_y in 1:N+1
-            #         node_vars = u_solution(dg.elements.node_pos[element_x, element_y, node_x, node_y])
-
-            #         for s in 1:nvariables(dg)
-            #             exact[s, element_x, element_y, node_x, node_y] = node_vars[s]
-            #         end
-            #     end
-            # end
 
         error[j] = maximum(abs.(sol.u[1] - sol.u[2])) # maximum(abs.(exact - sol))
     end

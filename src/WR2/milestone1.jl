@@ -5,8 +5,8 @@ using Printf
 using PrettyTables
 
 ######### EINSTELLUNGEN ############
-N_vec = [3, 4]
-Nq_vec =[1, 2, 4, 8, 16]
+N_vec = [2, 3, 4]
+Nq_vec =[2, 4, 8, 16]
 
 volume_integral = Trixi.VolumeIntegralStrongForm() #dont know why we need to use Trixi. , otherwise wont be recognised
 surface_flux=flux_lax_friedrichs
@@ -95,7 +95,7 @@ coordinates_max = ( 2.0,  2.0)
             #                                      save_final_solution=true,
             #                                      solution_variables=cons2prim)
             
-            stepsize_callback = StepsizeCallback(cfl=0.5)
+            stepsize_callback = StepsizeCallback(cfl=1)
             
             callbacks = CallbackSet(
                                     # summary_callback,

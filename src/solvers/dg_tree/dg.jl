@@ -20,7 +20,7 @@ create_cache(mesh, equations, ::VolumeIntegralWeakForm, dg, uEltype) = NamedTupl
 
 """
     VolumeIntegralStrongForm
-
+BLZ veränderung
 The equivalent strong form volume integral
 """
 struct VolumeIntegralStrongForm <: AbstractVolumeIntegral end
