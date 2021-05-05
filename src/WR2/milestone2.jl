@@ -69,7 +69,10 @@ for N in N_vec
         cells_per_dimension = (Nq, Nq)
 
         mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max)
-            
+        #mesh = TreeMesh(coordinates_min, coordinates_max,
+        #        initial_refinement_level=6,
+        #        n_cells_max=10_000)
+
         semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver, source_terms=source_terms_convergence_test)
             
             
@@ -84,8 +87,8 @@ for N in N_vec
 
         stepsize_callback = StepsizeCallback(cfl=0.9)
             
-        callbacks = CallbackSet(summary_callback,
-                                    stepsize_callback)
+        callbacks = CallbackSet(#summary_callback,
+                                stepsize_callback)
             
         ###############################################################################
         # run the simulation
