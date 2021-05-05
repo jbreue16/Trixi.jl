@@ -2,6 +2,15 @@ using OrdinaryDiffEq
 using Trixi
 using Plots
 
+######### EINSTELLUNGEN ############
+N = 3
+Nq = 4
+
+surface_flux = flux_lax_friedrichs
+volume_flux  = flux_chandrashekar
+volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
+
+
 ###############################################################################
 # semidiscretization of the compressible Euler equations
 
@@ -25,29 +34,35 @@ function WR2_initial_condition_convergence_test(x, t, equations::CompressibleEul
   end
 initial_condition = WR2_initial_condition_convergence_test
 
-surface_flux = flux_lax_friedrichs
-volume_flux  = flux_chandrashekar
-volume_integral=VolumeIntegralFluxDifferencing(volume_flux)
-basis = LobattoLegendreBasis(3)
+basis = LobattoLegendreBasis(N)
 solver = DGSEM(basis, surface_flux, volume_integral)
 
-coordinates_min = (-2, -2)
-coordinates_max = ( 2,  2)
-mesh = TreeMesh(coordinates_min, coordinates_max,
-                initial_refinement_level=6,
-                n_cells_max=10_000)
+coordinates_min = (0.0, 0.0)
+coordinates_max = (2.0, 2.0)
+cells_per_dimension = (Nq, Nq)
+mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max)
+# mesh = TreeMesh(coordinates_min, coordinates_max,
+#                 initial_refinement_level=6,
+#                 n_cells_max=10_000)
 
-
-semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver)
+semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver, source_terms=source_terms_convergence_test)
+# semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver)
 
 
 ###############################################################################
 # ODE solvers, callbacks etc.
 
-tspan = (0.0, 2)
+tspan = (0.0, 2.0)
 ode = semidiscretize(semi, tspan)
 
 summary_callback = SummaryCallback()
+
+analysis_interval = 100
+analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_analysis=true,
+                                     extra_analysis_errors=(:conservation_error,),
+                                     extra_analysis_integrals=(entropy, energy_total,
+                                                               energy_kinetic, energy_internal))
+
 
 save_solution = SaveSolutionCallback(interval=100,
                                      save_initial_solution=true,
@@ -56,7 +71,9 @@ save_solution = SaveSolutionCallback(interval=100,
 
 stepsize_callback = StepsizeCallback(cfl=0.9)
 
-callbacks = CallbackSet(summary_callback, stepsize_callback)
+callbacks = CallbackSet(summary_callback,
+                        analysis_callback,
+                        stepsize_callback)
 
 
 ###############################################################################
