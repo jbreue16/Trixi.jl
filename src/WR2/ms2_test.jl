@@ -3,7 +3,7 @@ using Trixi
 using Plots
 
 ######### EINSTELLUNGEN ############
-N = 3
+N = 5
 Nq = 4
 
 surface_flux = flux_lax_friedrichs
@@ -69,7 +69,7 @@ save_solution = SaveSolutionCallback(interval=100,
                                      save_final_solution=true,
                                      solution_variables=cons2prim)
 
-stepsize_callback = StepsizeCallback(cfl=0.9)
+stepsize_callback = StepsizeCallback(cfl=0.7)
 
 callbacks = CallbackSet(summary_callback,
                         analysis_callback,
