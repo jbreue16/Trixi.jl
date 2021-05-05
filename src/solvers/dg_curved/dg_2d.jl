@@ -127,12 +127,6 @@ end
             add_to_node_vars!(du, integral_contribution, equations, dg, i, jj, element)
         end
     end
-<<<<<<< HEAD
-=======
- 
-    return nothing
-    
->>>>>>> cee5705178d264944af7d82143214c7822ac5d98
 end
 
 # BLZ veränderung
