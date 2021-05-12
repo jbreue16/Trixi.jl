@@ -71,48 +71,8 @@ function calc_volume_integral!(du, u,
             end
         end
     end
-
+    error("weakform")
     return nothing
-end
-
-function calc_volume_integral!(du, u,
-    mesh::CurvedMesh{2},
-    nonconservative_terms::Val{false}, equations,
-    volume_integral::VolumeIntegralStrongForm,
-    dg::DGSEM, cache)
-@unpack derivative_dhat = dg.basis
-@unpack contravariant_vectors = cache.elements
-
-@threaded for element in eachelement(dg, cache)
-for j in eachnode(dg), i in eachnode(dg)
-u_node = get_node_vars(u, equations, dg, i, j, element)
-
-flux1 = flux(u_node, 1, equations)
-flux2 = flux(u_node, 2, equations)
-
-# Compute the contravariant flux by taking the scalar product of the
-# first contravariant vector Ja^1 and the flux vector
-Ja11, Ja12 = get_contravariant_vector(1, contravariant_vectors, i, j, element)
-contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
-
-for ii in eachnode(dg)
-integral_contribution = derivative_dhat[ii, i] * contravariant_flux1
-add_to_node_vars!(du, integral_contribution, equations, dg, ii, j, element)
-end
-
-# Compute the contravariant flux by taking the scalar product of the
-# second contravariant vector Ja^2 and the flux vector
-Ja21, Ja22 = get_contravariant_vector(2, contravariant_vectors, i, j, element)
-contravariant_flux2 = Ja21 * flux1 + Ja22 * flux2
-
-for jj in eachnode(dg)
-integral_contribution = derivative_dhat[jj, j] * contravariant_flux2
-add_to_node_vars!(du, integral_contribution, equations, dg, i, jj, element)
-end
-end
-end
-
-return nothing
 end
 
 # BLZ veränderung
@@ -143,6 +103,7 @@ function calc_volume_integral!(du, u,
             for ii in (i + 1):nnodes(dg)
                 u_node_ii = get_node_vars(u, equations, dg, ii, j, element)
                 flux1 = volume_integral.volume_flux(u_node, u_node_ii, 1, equations)
+                # flux2 = volume_integral.volume_flux(u_node, u_node_ii, 2, equations)
                 contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
                 integral_contribution = derivative_split[i, ii] * contravariant_flux1
                 add_to_node_vars!(du, integral_contribution, equations, dg, i,  j, element)
@@ -163,6 +124,7 @@ function calc_volume_integral!(du, u,
             for jj in (j + 1):nnodes(dg)
                 u_node_jj = get_node_vars(u, equations, dg, i, jj, element)
                 flux2 = volume_integral.volume_flux(u_node, u_node_jj, 2, equations)
+                # flux1 = volume_integral.volume_flux(u_node, u_node_jj, 1, equations)
                 contravariant_flux2 = Ja21 * flux1 + Ja22 * flux2
                 integral_contribution =  derivative_split[j, jj] * contravariant_flux2
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, j,  element)

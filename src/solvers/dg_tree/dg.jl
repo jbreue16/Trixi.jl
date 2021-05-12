@@ -18,14 +18,6 @@ struct VolumeIntegralWeakForm <: AbstractVolumeIntegral end
 
 create_cache(mesh, equations, ::VolumeIntegralWeakForm, dg, uEltype) = NamedTuple()
 
-"""
-    VolumeIntegralStrongForm
-BLZ veränderung
-The equivalent strong form volume integral
-"""
-struct VolumeIntegralStrongForm <: AbstractVolumeIntegral end
-
-create_cache(mesh, equations, ::VolumeIntegralStrongForm, dg, uEltype) = NamedTuple()
 
 """
     VolumeIntegralFluxDifferencing
