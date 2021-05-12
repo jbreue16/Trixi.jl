@@ -71,7 +71,6 @@ function calc_volume_integral!(du, u,
             end
         end
     end
-    error("weakform")
     return nothing
 end
 
