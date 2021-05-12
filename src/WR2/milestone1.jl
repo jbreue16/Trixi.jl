@@ -11,7 +11,7 @@ CFL = 0.9
 latex = false
 # uncomment analysis_callback to get enrtopy/energy analysis
 
-volume_integral = Trixi.VolumeIntegralStrongForm() #dont know why we need to use Trixi. , otherwise wont be recognised
+volume_integral = VolumeIntegralWeakForm() 
 surface_flux=flux_lax_friedrichs
 ###############################################################################
 # semidiscretization of the compressible Euler equations
