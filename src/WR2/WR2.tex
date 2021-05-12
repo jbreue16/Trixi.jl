@@ -88,7 +88,7 @@ Wissenschaftliches Rechnen II \\[18pt]}
 \author{ \textbf{Teamname} \\
 Jan Breuer\\
 Mats Lerho \\
-Henrik }
+Henrik Zunker}
 \date{\today}
 
 % Erzeugung des Deckblatt
@@ -227,6 +227,18 @@ Um ein stabiles Verfahren zu erhalten, ist die Relation $\Delta t \sim \Delta x 
 4. Verify the high-order convergence rate of the Standard DG version, as you did in the previous semester, for the two polynomial degrees N=3 and N=4. \\
 \newline
 \textbf{Lösung:} \\
+Die Konvergenz des Verfahrens testen wir mit einer $2$-periodischen Sinusfunktion als Anfangsbedingung auf einem periodischen Gebiet $[0, 2]^2$ und von $t=0$ bis $t=2$.
+\begin{align}
+u_0(x_1, x_2, t) = 
+\begin{pmatrix}
+2 + 0.1 \cdot sin( \pi (x_1 + x_2 - t)) \\
+2 + 0.1 \cdot sin( \pi (x_1 + x_2 - t)) \\
+2 + 0.1 \cdot sin( \pi (x_1 + x_2 - t)) \\
+2 + 0.1 \cdot sin( \pi (x_1 + x_2 - t))
+\end{pmatrix}
+\label{Anfangsbedingung Konvergenz}
+\end{align}
+
 Konvergenztabellen für das standard DGSEM.
 
 \begin{table}[H]
@@ -239,7 +251,8 @@ Konvergenztabellen für das standard DGSEM.
     4 & $\num{1.32856e-02}$ & $\num{2.27}$ \\
     8 & $\num{8.78254e-04}$ & $\num{3.92}$ \\
     16 & $\num{4.49618e-05}$ & $\num{4.29}$ \\
-    32 & $\num{2.92247e-06}$ & $\num{3.94}$ \\\hline\hline
+    32 & $\num{2.92247e-06}$ & $\num{3.94}$ \\
+    64 & $\num{1.91309e-07}$ & $\num{3.93}$ \\\hline\hline
   \end{tabular} 
   \caption{N = $3$}
   }
@@ -252,7 +265,8 @@ Konvergenztabellen für das standard DGSEM.
     4 & $\num{1.14360e-03}$ & $\num{4.38}$ \\
     8 & $\num{4.22035e-05}$ & $\num{4.76}$ \\
     16 & $\num{2.07943e-06}$ & $\num{4.34}$ \\
-    32 & $\num{8.93401e-08}$ & $\num{4.54}$ \\\hline\hline
+    32 & $\num{8.93401e-08}$ & $\num{4.54}$ \\
+    64 & $\num{3.37353e-09}$ & $\num{4.73}$ \\\hline\hline
   \end{tabular}
    \caption{N = $4$}
   }
@@ -273,6 +287,8 @@ whereas for the split form approximations the Riemann solver is coupled to the s
 2. Verify the high order convergence rate as well as the entropy-conservation and entropy-stabilisation properties of the split form scheme. \\
 \newline
 \textbf{Lösung:} \\
+Die Konvergenz des Verfahrens testen wir erneut mit der $2$-periodischen Sinusfunktion aus Gleichung \ref{Anfangsbedingung Konvergenz} als Anfangsbedingung auf einem periodischen Gebiet $[0, 2]^2$ und von $t=0$ bis $t=2$.\\
+
 Konvergenztabellen für das Split-Form DGSEM mit Chandrashekar Fluss.
 
 \begin{table}[H]
@@ -285,7 +301,8 @@ Konvergenztabellen für das Split-Form DGSEM mit Chandrashekar Fluss.
     4 & $\num{1.42021e-02}$ & $\num{2.28}$ \\
     8 & $\num{8.05405e-04}$ & $\num{4.14}$ \\
     16 & $\num{3.93625e-05}$ & $\num{4.35}$ \\
-    32 & $\num{2.49788e-06}$ & $\num{3.98}$ \\\hline\hline
+    32 & $\num{2.49788e-06}$ & $\num{3.98}$ \\
+    64 & $\num{1.91309e-07}$ & $\num{3.93}$ \\\hline\hline
   \end{tabular} 
   \caption{N = $3$}
   }
@@ -298,13 +315,56 @@ Konvergenztabellen für das Split-Form DGSEM mit Chandrashekar Fluss.
     4 & $\num{8.08062e-04}$ & $\num{4.83}$ \\
     8 & $\num{3.71735e-05}$ & $\num{4.44}$ \\
     16 & $\num{1.76278e-06}$ & $\num{4.40}$ \\
-    32 & $\num{7.82467e-08}$ & $\num{4.49}$ \\\hline\hline
+    32 & $\num{7.82467e-08}$ & $\num{4.49}$ \\
+    64 & $\num{2.91605e-09}$ & $\num{4.75}$ \\\hline\hline
   \end{tabular}
    \caption{N = $4$}
   }
 \end{table}
+Zur Entropie Konservierung und Entropie Stabilität/Dissipativität: \\
+Die Chandrashekar Split-Form DGSEM ist Entropie stabil/dissipativ und nicht Entropie erhaltend. 
+Zum Test dieser Eigenschaft wurde die Anfangsbedingung einer schwachen Druckwelle gewählt und die Veränderung der Entropie von $t=0$ bis $t=2$ auf einem Gebiet mit periodischen Randbedingungen betrachtet.\\
+Änderung der Entropie mit standard DGSEM und $N=3$: \\
+totale Energie || Entropie $t=0$: $2.53146784e+00 \ || \ -5.92064714e-05$\\
+totale Energie || Entropie $t=2$: $2.53146784e+00 \ || \ -3.64796886e-04$ \\
+Änderung der Entropie mit Chendrashekar Split-Form DGSEM und $N=3$: \\
+totale Energie || Entropie $t=0$: $2.53146784e+00 \ || \ -5.92064714e-05$\\
+totale Energie || Entropie $t=2$: $2.53146784e+00 \ || \ -3.56391403e-04$ \\
+
+\newpage
+\section{Meilenstein 3}
+We now want to approximate the solution of the Euler equations on curvi-linear geometries, which is especially important when our simulation domainhas curved boundaries. In the last semester, we learned how to constructcurvilinear mappings. For this part of the project, we will use curvilinearmappings to extend our standard and split-form DGSEM code to curvilinearstructured meshes. The first step is to make our code able to approximate the solution of the Eu-ler equations on a curvilinear block with periodic boundary conditions. Thecurvilinear block will be obtained from a Cartesian block, $ \tilde{x}, \tilde{y} \in [-1, 1]^2$, using the following mapping:
 
 
+\subsection{Curved mesh, transfinite mapping and contravariant fluxes}
+1. Generate the mesh: Implement routines to obtain the physical coordinates of the LGL nodes for all elements of the mesh.\\
+2. Construct transfinite mappings to transform the coordinates of a reference element, $ \xi, \eta \in [-1, 1]^2$, to the physical coordinates of each element: $x(\xi,\eta)$. The input of the transfinite mapping routines shouldbe the physical coordinates of the LGL nodes of each element.\\
+3. Rewrite the conservation law in terms of the contravariant fluxes,
+\begin{align*}
+  J u_t + \tilde{f}_\xi +\tilde{g}_\eta =0
+\end{align*}
+
+\textbf{Solution:}
+The conservation law states 
+\begin{align*}
+ u_t + f_x +g_y &= 0 \\
+ \Leftrightarrow  u_t + \frac{\partial f}{\partial\xi} \frac{\partial\xi}{\partial x}+\frac{\partial f}{\partial \eta} \frac{\partial \eta}{\partial y} + \frac{\partial g}{\partial\xi} \frac{\partial\xi}{\partial x}+\frac{\partial g}{\partial\eta} \frac{\partial\eta}{\partial y} &= 0 
+\end{align*}
+We use the derivations of the mapping to estimate the metric terms $\eta_x, \eta_y, \xi_x, \xi_y$:
+\begin{align*}
+\nabla x(\xi, \eta) &= 
+\begin{pmatrix}
+x_\xi & x_\eta\\
+y_\xi & y_\eta
+\end{pmatrix} \\ &=
+\begin{pmatrix}
+1 - 0.15 \frac{\pi}{2} sin(\frac{\pi}{2}\xi) cos(\frac{3\pi}{2} \eta) &
+- 0.15 cos(\frac{\pi}{2}\xi) \frac{3\pi}{2} sin(\frac{3\pi}{2} \eta) \\
+- 0.15 \cdot 2\pi sin(2\pi\xi) cos(\frac{\pi}{2} \eta) &
+1 - 0.15 cos(2\pi \xi) \frac{\pi}{2}  sin(\frac{\pi}{2} \eta)
+\end{pmatrix}
+\end{align*}
+With 
 
 \end{document}
 
