@@ -9,17 +9,30 @@ advectionvelocity = 1.0
 equations = LinearScalarAdvectionEquation1D(advectionvelocity)
 
 # Create DG solver with polynomial degree = 3 and (local) Lax-Friedrichs/Rusanov flux as surface flux
-solver = DGSEM(polydeg=3, surface_flux=flux_lax_friedrichs)
+solver = DGSEM(polydeg=2, surface_flux=flux_lax_friedrichs)
+
+
 
 coordinates_min = (-1.0,) # minimum coordinate
 coordinates_max = (1.0,) # maximum coordinate
 cells_per_dimension = (16,)
 
+function initial_condition_shock(x, t, equation::LinearScalarAdvectionEquation1D)
+    # Store translated coordinate for easy use of exact solution
+    x_trans = x - equation.advectionvelocity * t
+    if x[1] < 0.75 && x[1]>0.25
+      scalar = 1
+    else
+      scalar = 0 
+    end
+    return SVector(scalar)
+  end
+
 # Create curved mesh with 16 cells
 mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max)
 
 # A semidiscretization collects data structures and functions for the spatial discretization
-semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition_convergence_test, solver)
+semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition_shock, solver)
 
 
 ###############################################################################
@@ -40,7 +53,7 @@ save_solution = SaveSolutionCallback(interval=100,
                                      solution_variables=cons2prim)
 
 # The StepsizeCallback handles the re-calculcation of the maximum Δt after each time step
-stepsize_callback = StepsizeCallback(cfl=1.6)
+stepsize_callback = StepsizeCallback(cfl=0.5)
 
 # Create a CallbackSet to collect all callbacks such that they can be passed to the ODE solver
 callbacks = CallbackSet(summary_callback, analysis_callback, save_solution, stepsize_callback)
