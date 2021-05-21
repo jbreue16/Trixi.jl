@@ -63,11 +63,17 @@ semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition_shock, so
 # Create ODE problem with time span from 0.0 to 1.0
 ode = semidiscretize(semi, (time_start, time_end));
 
+# At the beginning of the main loop, the SummaryCallback prints a summary of the simulation setup
+# and resets the timers
+summary_callback = SummaryCallback()
+
 # The StepsizeCallback handles the re-calculcation of the maximum Δt after each time step
 stepsize_callback = StepsizeCallback(cfl=0.5)
 
+analysis_callback = AnalysisCallback(semi, interval=100, extra_analysis_errors=(:conservation_error,))
+
 # Create a CallbackSet to collect all callbacks such that they can be passed to the ODE solver
-callbacks = CallbackSet(stepsize_callback)
+callbacks = CallbackSet(stepsize_callback,analysis_callback)
 
 
 ###############################################################################
