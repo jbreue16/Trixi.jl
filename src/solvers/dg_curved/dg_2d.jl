@@ -75,14 +75,76 @@ function calc_volume_integral!(du, u,
 end
 
 ##################BLZ Volume Integral Pseudo Strong Form ##############
+# function calc_volume_integral!(du, u,
+#     mesh::CurvedMesh{2},
+#     nonconservative_terms::Val{false}, equations,
+#     volume_integral::VolumeIntegralPseudoStrongForm,
+#     dg::DGSEM, cache)
+#     @unpack derivative_matrix = dg.basis # derivative_dhat 
+#     @unpack contravariant_vectors = cache.elements 
+#     @unpack weights = dg.basis
+
+#     d = derivative_matrix
+#     d[1, 1] += 1/weights[1]
+#     d[end,end] -= 1/weights[end] 
+# error(d)
+#     @threaded for element in eachelement(dg, cache)
+#         for j in eachnode(dg), i in eachnode(dg)
+#             u_node = get_node_vars(u, equations, dg, i, j, element)
+
+#             flux1 = flux(u_node, 1, equations)
+#             flux2 = flux(u_node, 2, equations)
+
+# # Compute the contravariant flux by taking the scalar product of the
+# # first contravariant vector Ja^1 and the flux vector
+#             Ja11, Ja12 = get_contravariant_vector(1, contravariant_vectors, i, j, element)
+#             contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
+
+#             for ii in eachnode(dg)
+#                 integral_contribution = d[ii, i] * contravariant_flux1
+#                 # Add interface flux of Pseudo Strong Form; add M^-1 * B * f(u)
+#                 # if ii & i == 1
+#                 #     integral_contribution += 1/weights[1] * contravariant_flux1
+#                 # elseif ii & i == nnodes(dg)
+#                 #     integral_contribution -= 1/weights[end] * contravariant_flux1
+#                 # end
+#                 add_to_node_vars!(du, integral_contribution, equations, dg, ii, j, element)
+#             end
+
+# # Compute the contravariant flux by taking the scalar product of the
+# # second contravariant vector Ja^2 and the flux vector
+#             Ja21, Ja22 = get_contravariant_vector(2, contravariant_vectors, i, j, element)
+#             contravariant_flux2 = Ja21 * flux1 + Ja22 * flux2
+
+#             for jj in eachnode(dg)
+#                 integral_contribution = d[jj, j] * contravariant_flux2
+#                 # Add interface flux of Pseudo Strong Form; add  g(u) *M^-1 * B
+#                 # if j & jj == 1
+#                 #     integral_contribution += 1/weights[1] * contravariant_flux2
+#                 # elseif j & jj == nnodes(dg)
+#                 #     integral_contribution -= 1/weights[end] * contravariant_flux2
+#                 # end
+#                 add_to_node_vars!(du, integral_contribution, equations, dg, i, jj, element)
+#             end
+#         end
+#     end
+#     return nothing
+# end
+
+#############
 function calc_volume_integral!(du, u,
     mesh::CurvedMesh{2},
     nonconservative_terms::Val{false}, equations,
     volume_integral::VolumeIntegralPseudoStrongForm,
     dg::DGSEM, cache)
-    @unpack derivative_matrix = dg.basis # derivative_dhat 
-    @unpack contravariant_vectors = cache.elements 
-    @unpack weights = dg.basis
+
+    @unpack derivative_matrix = dg.basis
+    @unpack inverse_weights = dg.basis
+    @unpack contravariant_vectors = cache.elements
+
+    derivative_pseudostrong = copy(derivative_matrix)
+    derivative_pseudostrong[  1,   1] += inverse_weights[1]
+    derivative_pseudostrong[end, end] -= inverse_weights[end]
 
     @threaded for element in eachelement(dg, cache)
         for j in eachnode(dg), i in eachnode(dg)
@@ -97,13 +159,7 @@ function calc_volume_integral!(du, u,
             contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
 
             for ii in eachnode(dg)
-                integral_contribution = derivative_matrix[ii, i] * contravariant_flux1
-                # Add interface flux of Pseudo Strong Form; add M^-1 * B * f(u)
-                if ii, i == 1
-                    integral_contribution += 1/weights[1] * contravariant_flux1
-                elseif ii, i == nn0des(dg)
-                    integral_contribution -= 1/weights[end] * contravariant_flux1
-                end
+                integral_contribution = derivative_pseudostrong[ii, i] * contravariant_flux1
                 add_to_node_vars!(du, integral_contribution, equations, dg, ii, j, element)
             end
 
@@ -113,62 +169,13 @@ function calc_volume_integral!(du, u,
             contravariant_flux2 = Ja21 * flux1 + Ja22 * flux2
 
             for jj in eachnode(dg)
-                integral_contribution = derivative_matrix[jj, j] * contravariant_flux2
-                # Add interface flux of Pseudo Strong Form; add  g(u) *M^-1 * B
-                if j, jj == 1
-                    integral_contribution += 1/weights[1] * contravariant_flux2
-                elseif j, jj == nnodes(dg)
-                    integral_contribution -= 1/weights[end] * contravariant_flux2
-                end
+                integral_contribution = derivative_pseudostrong[jj, j] * contravariant_flux2
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, jj, element)
             end
         end
     end
     return nothing
 end
-
-#############
-# function calc_volume_integral!(du, u,
-#     mesh::CurvedMesh{2},
-#     nonconservative_terms::Val{false}, equations,
-#     volume_integral::VolumeIntegralPseudoStrongForm,
-#     dg::DGSEM, cache)
-# @unpack derivative_split = dg.basis
-# @unpack derivative_matrix = dg.basis
-# @unpack contravariant_vectors = cache.elements
-# # derivative split is 2*D - S 
-# derivative_pseudostrong = derivative_split - derivative_matrix
-
-# @threaded for element in eachelement(dg, cache)
-# for j in eachnode(dg), i in eachnode(dg)
-# u_node = get_node_vars(u, equations, dg, i, j, element)
-
-# flux1 = flux(u_node, 1, equations)
-# flux2 = flux(u_node, 2, equations)
-
-# # Compute the contravariant flux by taking the scalar product of the
-# # first contravariant vector Ja^1 and the flux vector
-# Ja11, Ja12 = get_contravariant_vector(1, contravariant_vectors, i, j, element)
-# contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
-
-# for ii in eachnode(dg)
-# integral_contribution = derivative_pseudostrong[ii, i] * contravariant_flux1
-# add_to_node_vars!(du, integral_contribution, equations, dg, ii, j, element)
-# end
-
-# # Compute the contravariant flux by taking the scalar product of the
-# # second contravariant vector Ja^2 and the flux vector
-# Ja21, Ja22 = get_contravariant_vector(2, contravariant_vectors, i, j, element)
-# contravariant_flux2 = Ja21 * flux1 + Ja22 * flux2
-
-# for jj in eachnode(dg)
-# integral_contribution = derivative_pseudostrong[jj, j] * contravariant_flux2
-# add_to_node_vars!(du, integral_contribution, equations, dg, i, jj, element)
-# end
-# end
-# end
-# return nothing
-# end
 ###########
 
 # BLZ Volume Integral FLuxdifferencing based on Tree Mesh
