@@ -5,7 +5,7 @@ using Trixi
 # Vgl. elixir_euler_free_stream_curved
 ###############################################################################
 CFL = 0.8           # 2
-tspan = (0.0, 0.4)
+tspan = (0.0, 2)
 
 # semidiscretization of the compressible Euler equations
 
@@ -14,7 +14,7 @@ equations = CompressibleEulerEquations2D(1.4)
 initial_condition = initial_condition_constant
 
 
-surface_flux = FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))# flux_lax_friedrichs
+surface_flux = flux_lax_friedrichs# FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))# flux_lax_friedrichs
 basis = LobattoLegendreBasis(3)
 volume_flux  = flux_chandrashekar 
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
