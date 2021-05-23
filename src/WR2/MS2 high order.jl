@@ -8,10 +8,12 @@ using PrettyTables
 N_vec = [3, 4]
 Nq_vec = [2, 4, 8, 16, 32]
 CFL = 0.9
-latex = false
+latex = true
 # uncomment analysis_callback to get enrtopy/energy analysis
 
-surface_flux = flux_lax_friedrichs
+# surface Flux can either be Lax Friedrichs or the volume two point flux 
+# surface_flux = flux_lax_friedrichs
+surface_flux = FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))
 volume_flux  = flux_chandrashekar
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
 

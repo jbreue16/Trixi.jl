@@ -4,8 +4,8 @@ using Trixi
 
 # Vgl. elixir_euler_free_stream_curved
 ###############################################################################
-CFL = 0.4           # 2
-tspan = (0.0, 0.036)  # 0.4 split form läuft nur bis 0.036 mit cfl=0.4, standard DGSEM läuft 
+CFL = 0.8           # 2
+tspan = (0.0, 0.4)
 
 # semidiscretization of the compressible Euler equations
 
@@ -13,12 +13,16 @@ equations = CompressibleEulerEquations2D(1.4)
 
 initial_condition = initial_condition_constant
 
-surface_flux = flux_lax_friedrichs
-# basis = LobattoLegendreBasis(3)
-# volume_flux  = flux_chandrashekar
-# volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
-# solver = DGSEM(basis, surface_flux, volume_integral)
-solver = DGSEM(polydeg=3, surface_flux=flux_lax_friedrichs)
+
+surface_flux = FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))# flux_lax_friedrichs
+basis = LobattoLegendreBasis(3)
+volume_flux  = flux_chandrashekar 
+volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
+solver = DGSEM(basis, surface_flux, volume_integral)
+
+# surface_flux = flux_lax_friedrichs
+# volume_integral = Trixi.VolumeIntegralWeakForm()
+# solver = DGSEM(polydeg=3, surface_flux=surface_flux, volume_integral = volume_integral )
 
 # mapping as described in the worksheet
 function mapping(xi_, eta_)
@@ -48,7 +52,11 @@ ode = semidiscretize(semi, tspan)
 summary_callback = SummaryCallback()
 
 analysis_interval = 100
-analysis_callback = AnalysisCallback(semi, interval=analysis_interval)
+analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_analysis=true,
+                                      # extra_analysis_errors=(:conservation_error,),
+                                      # extra_analysis_integrals=(entropy, energy_total,
+                                      # energy_kinetic, energy_internal)
+                                      )
 
 alive_callback = AliveCallback(analysis_interval=analysis_interval)
 
