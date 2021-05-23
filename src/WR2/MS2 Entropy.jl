@@ -7,18 +7,24 @@ using Trixi
 # -> central flux doesnt even work for standard DGSEM
 
 ##########  EINSTELLUNGEN     #########
+# Entropy conservation test with central surface flux and other initial conditions since it crashes with the blast wave
+# initial_condition = initial_condition = initial_condition_convergence_test
+# surface_flux = flux_central
+
+initial_condition = initial_condition = initial_condition_weak_blast_wave
+
 # Standard DGSEM Entropy STability
-# polydeg = 3
+# polydeg = 4
 # surface_flux = flux_lax_friedrichs
 # volume_integral = VolumeIntegralWeakForm()
 # solver = DGSEM(polydeg = polydeg, surface_flux = surface_flux, volume_integral = volume_integral )
 
 # CHandrashekar DGSEM Entropy STability
 # surface Flux can either be Lax Friedrichs or the volume two point flux 
-surface_flux = FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))
+surface_flux = flux_lax_friedrichs #FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))
 volume_flux  = flux_chandrashekar
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
-basis = LobattoLegendreBasis(3)
+basis = LobattoLegendreBasis(4)
 solver = DGSEM(basis, surface_flux, volume_integral)
 
 CFL = 0.9
@@ -26,9 +32,11 @@ tspan = (0.0, 2)
 ###############################################################################
 # semidiscretization of the compressible Euler equations
 
+
+
 equations = CompressibleEulerEquations2D(1.4)
 
-initial_condition = initial_condition = initial_condition_weak_blast_wave
+
 
 coordinates_min = (-2.0, -2.0)
 coordinates_max = ( 2.0,  2.0)

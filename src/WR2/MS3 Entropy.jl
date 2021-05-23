@@ -12,7 +12,7 @@ using Trixi
 # surface_flux = flux_central
 # initial_condition = initial_condition_convergence_test
 
-# initial_condition = initial_condition_weak_blast_wave
+initial_condition = initial_condition_weak_blast_wave
 
 # Standard DGSEM Entropy STability
 # polydeg = 3
