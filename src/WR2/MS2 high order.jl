@@ -8,15 +8,17 @@ using PrettyTables
 N_vec = [3, 4]
 Nq_vec = [2, 4, 8, 16, 32]
 CFL = 0.9
-latex = true
+latex = false
 # uncomment analysis_callback to get enrtopy/energy analysis
 
 # surface Flux can either be Lax Friedrichs or the volume two point flux 
-# surface_flux = flux_lax_friedrichs
+surface_flux = flux_lax_friedrichs
 surface_flux = FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))
 volume_flux  = flux_chandrashekar
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
 
+# volume_integral = VolumeIntegralWeakForm()
+# surface_flux = flux_central
 ###############################################################################
 # semidiscretization of the compressible Euler equations
 
