@@ -16,7 +16,8 @@ latex = false
 surface_flux = flux_lax_friedrichs# FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))
 volume_flux  = flux_chandrashekar 
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
-
+# volume_integral = Trixi.VolumeIntegralPseudoStrongForm() 
+# surface_flux=flux_lax_friedrichs
 
 # mapping as described in the worksheet
 function mapping(xi_, eta_)
@@ -105,9 +106,9 @@ for N in N_vec
         analysis_interval = 1000
             
         analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_analysis=true,
-                                                 extra_analysis_errors=(:conservation_error,),
-                                                 extra_analysis_integrals=(entropy, energy_total,
-                                                                           energy_kinetic, energy_internal)
+                                                #  extra_analysis_errors=(:conservation_error,),
+                                                #  extra_analysis_integrals=(entropy, energy_total,
+                                                #                            energy_kinetic, energy_internal)
                                                 
                                                 )
             
@@ -122,7 +123,7 @@ for N in N_vec
             
         callbacks = CallbackSet(
                                     # summary_callback,
-                                    # analysis_callback,
+                                    analysis_callback,
                                     # alive_callback,
                                     # save_solution,
                                     stepsize_callback)
