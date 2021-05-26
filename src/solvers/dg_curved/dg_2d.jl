@@ -240,54 +240,11 @@ function calc_interface_flux!(cache, u,
 end
 
 ##############BLZ: minor change to include volume two point fluxes for Flux Differencing Form. (Below is the original function)
-@inline function calc_interface_flux!(surface_flux_values, left_element, right_element,
-    orientation, u,
-    mesh::CurvedMesh{2}, equations,
-    dg::DG, cache)
-# This is slow for LSA, but for some reason faster for Euler (see #519)
-    if left_element <= 0 # left_element = 0 at boundaries
-        return nothing
-    end
-
-    @unpack surface_flux = dg
-    @unpack contravariant_vectors = cache.elements
-
-    right_direction = 2 * orientation
-    left_direction = right_direction - 1
-
-    for i in eachnode(dg)
-        if orientation == 1
-            u_ll = get_node_vars(u, equations, dg, nnodes(dg), i, left_element)
-            u_rr = get_node_vars(u, equations, dg, 1,          i, right_element)
-
-# First contravariant vector Ja^1 as SVector
-            Ja_1, Ja_2 = get_contravariant_vector(1, contravariant_vectors, 1, i, right_element)
-        else # orientation == 2
-            u_ll = get_node_vars(u, equations, dg, i, nnodes(dg), left_element)
-            u_rr = get_node_vars(u, equations, dg, i, 1,          right_element)
-
-# Second contravariant vector Ja^2 as SVector
-            Ja_1, Ja_2 = get_contravariant_vector(2, contravariant_vectors, i, 1, right_element)
-        end
-
-        flux_1 = surface_flux(u_ll, u_rr, 1, equations)
-        flux_2 = surface_flux(u_ll, u_rr, 2, equations)
-        flux = Ja_1 * flux_1 + Ja_2 * flux_2
-
-        for v in eachvariable(equations)
-            surface_flux_values[v, i, right_direction, left_element] = flux[v]
-            surface_flux_values[v, i, left_direction, right_element] = flux[v]
-        end
-    end
-
-    return nothing
-end
-# Below is the original function
 # @inline function calc_interface_flux!(surface_flux_values, left_element, right_element,
-#                                       orientation, u,
-#                                       mesh::CurvedMesh{2}, equations,
-#                                       dg::DG, cache)
-#   # This is slow for LSA, but for some reason faster for Euler (see #519)
+#     orientation, u,
+#     mesh::CurvedMesh{2}, equations,
+#     dg::DG, cache)
+# # This is slow for LSA, but for some reason faster for Euler (see #519)
 #     if left_element <= 0 # left_element = 0 at boundaries
 #         return nothing
 #     end
@@ -303,17 +260,21 @@ end
 #             u_ll = get_node_vars(u, equations, dg, nnodes(dg), i, left_element)
 #             u_rr = get_node_vars(u, equations, dg, 1,          i, right_element)
 
-#       # First contravariant vector Ja^1 as SVector
-#             normal_vector = get_contravariant_vector(1, contravariant_vectors, 1, i, right_element)
+# # First contravariant vector Ja^1 as SVector
+#             Ja_1r, Ja_2r = get_contravariant_vector(1, contravariant_vectors, 1, i        , right_element)
+#             Ja_1l, Ja_2l = get_contravariant_vector(1, contravariant_vectors, i, nnodes(dg), left_element)
 #         else # orientation == 2
 #             u_ll = get_node_vars(u, equations, dg, i, nnodes(dg), left_element)
 #             u_rr = get_node_vars(u, equations, dg, i, 1,          right_element)
 
-#       # Second contravariant vector Ja^2 as SVector
-#             normal_vector = get_contravariant_vector(2, contravariant_vectors, i, 1, right_element)
+# # Second contravariant vector Ja^2 as SVector
+#             Ja_1r, Ja_2r = get_contravariant_vector(2, contravariant_vectors, i, 1        , right_element)
+#             Ja_1l, Ja_2l = get_contravariant_vector(2, contravariant_vectors, i, nnodes(dg), left_element)
 #         end
 
-#         flux = surface_flux(u_ll, u_rr, normal_vector, equations)
+#         flux_1 = surface_flux(u_ll, u_rr, 1, equations)
+#         flux_2 = surface_flux(u_ll, u_rr, 2, equations)
+#         flux = (Ja_1r+Ja_1l)/2 * flux_1 + (Ja_2r+Ja_2l)/2 * flux_2
 
 #         for v in eachvariable(equations)
 #             surface_flux_values[v, i, right_direction, left_element] = flux[v]
@@ -323,6 +284,47 @@ end
 
 #     return nothing
 # end
+# Below is the original function
+@inline function calc_interface_flux!(surface_flux_values, left_element, right_element,
+                                      orientation, u,
+                                      mesh::CurvedMesh{2}, equations,
+                                      dg::DG, cache)
+  # This is slow for LSA, but for some reason faster for Euler (see #519)
+    if left_element <= 0 # left_element = 0 at boundaries
+        return nothing
+    end
+
+    @unpack surface_flux = dg
+    @unpack contravariant_vectors = cache.elements
+
+    right_direction = 2 * orientation
+    left_direction = right_direction - 1
+
+    for i in eachnode(dg)
+        if orientation == 1
+            u_ll = get_node_vars(u, equations, dg, nnodes(dg), i, left_element)
+            u_rr = get_node_vars(u, equations, dg, 1,          i, right_element)
+
+      # First contravariant vector Ja^1 as SVector
+            normal_vector = get_contravariant_vector(1, contravariant_vectors, 1, i, right_element)
+        else # orientation == 2
+            u_ll = get_node_vars(u, equations, dg, i, nnodes(dg), left_element)
+            u_rr = get_node_vars(u, equations, dg, i, 1,          right_element)
+
+      # Second contravariant vector Ja^2 as SVector
+            normal_vector = get_contravariant_vector(2, contravariant_vectors, i, 1, right_element)
+        end
+
+        flux = surface_flux(u_ll, u_rr, normal_vector, equations)
+
+        for v in eachvariable(equations)
+            surface_flux_values[v, i, right_direction, left_element] = flux[v]
+            surface_flux_values[v, i, left_direction, right_element] = flux[v]
+        end
+    end
+
+    return nothing
+end
 
 
 # TODO: Taal dimension agnostic
