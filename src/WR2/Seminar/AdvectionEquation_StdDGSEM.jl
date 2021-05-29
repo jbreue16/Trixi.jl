@@ -51,7 +51,14 @@ end
 
 
 # Create curved mesh with 16 cells
-mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max)
+#mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max)
+coordinates_min = 0 # minimum coordinate
+coordinates_max =  1 # maximum coordinate
+
+# Create a uniformely refined mesh with periodic boundaries
+mesh = TreeMesh(coordinates_min, coordinates_max,
+                initial_refinement_level=1,
+                n_cells_max=30_000) # set maximum capacity of tree data structure
 
 # A semidiscretization collects data structures and functions for the spatial discretization
 semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition_shock, solver)
