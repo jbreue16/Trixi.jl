@@ -6,14 +6,17 @@ using Plots
 # semidiscretization of the linear advection equation
 
 advectionvelocity = 2.0     # Velocity
-N = 7                       # Polynomial degree (3, 5, 7)
-NQ = 16                     # Cells (4, 8, 16)
+N = 3                       # Polynomial degree (3, 5, 7)
+NQ = 4                      # Cells (4, 8, 16)
 time_start = 0.0            # Start time
 time_end = 2                # End time
 
 # Equation
 equations = LinearScalarAdvectionEquation1D(advectionvelocity)
 surface_flux = flux_lax_friedrichs
+
+# Boundary Condition
+boundary_condition = boundary_condition_periodic
 
 # Create DG solver with polynomial degree = N and (local) Lax-Friedrichs/Rusanov flux as surface flux
 solver = DGSEM(polydeg=N, surface_flux=surface_flux)
@@ -49,7 +52,7 @@ end
 mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max)
 
 # A semidiscretization collects data structures and functions for the spatial discretization
-semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition_shock, solver)
+semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition_shock, solver, boundary_conditions=boundary_condition)
 
 
 ###############################################################################

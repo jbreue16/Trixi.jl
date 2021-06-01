@@ -5,15 +5,18 @@ using Plots
 ###############################################################################
 # semidiscretization of the linear advection equation
 
-advectionvelocity = 2.0     # Velocity
-N = 5                       # Polynomial degree (3, 5)
-NQ = 8                      # Cells (4, 8)
-time_start = 0.0            # Start time
-time_end = 2                # End time
+advectionvelocity = 2.0       # Velocity (2.0)
+N = 2                       # Polynomial degree (2, 5)
+NQ = 4                     # Cells (4, 8)
+time_start = 0.0              # Start time (0.0)
+time_end = 2               # End time (2)
 
 # Equation and surface flux
 equations = LinearScalarAdvectionEquation1D(advectionvelocity)
 surface_flux = flux_lax_friedrichs
+
+# Boundary Condition
+boundary_condition = boundary_condition_periodic
 
 # Create DG solver with polynomial degree = N and (local) Lax-Friedrichs/Rusanov flux as surface flux
 solver = DGSEM(polydeg=N, surface_flux=surface_flux)
@@ -25,29 +28,25 @@ cells_per_dimension = (NQ,)
 
 # Initial Condition
 function initial_condition_glatt(x, t, equation::LinearScalarAdvectionEquation1D)
-  # Store translated coordinate for easy use of exact solution
-  x_trans = x - equation.advectionvelocity * t
-
-  scalar = sinpi(2 * x_trans[1])
+  
+  scalar = sinpi(2 * x[1])
   return SVector(scalar)
 end
 
 
 # Exakte Loesung mit T=2 und a=2
 function exact_solution(x, t, a)
-  # Store translated coordinate for easy use of exact solution
-  x_trans = x - a * t
 
-  scalar = sinpi(2 * x_trans[1])
+  scalar = sinpi(2 * x[1])
   return scalar
 end
 
 
-# Create curved mesh with 16 cells
+# Create curved mesh with cells
 mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max)
 
 # A semidiscretization collects data structures and functions for the spatial discretization
-semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition_glatt, solver)
+semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition_glatt, solver, boundary_conditions=boundary_condition)
 
 
 ###############################################################################
@@ -81,6 +80,7 @@ sol = solve(ode, CarpenterKennedy2N54(williamson_condition=false),
 summary_callback()
 
 # Exakte Loesung
+#x_vec = collect(range(0, length=1000, stop=1))
 pd = PlotData1D(sol)
 sol_e = exact_solution.(pd.x, time_end, advectionvelocity)
 
