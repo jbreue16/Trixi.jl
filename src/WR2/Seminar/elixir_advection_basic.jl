@@ -9,7 +9,7 @@ advectionvelocity = 1.0
 equations = LinearScalarAdvectionEquation1D(advectionvelocity)
 
 # Create DG solver with polynomial degree = 3 and (local) Lax-Friedrichs/Rusanov flux as surface flux
-N = 1
+N = 3
 solver = DGSEM(polydeg=N, surface_flux=flux_lax_friedrichs)
 
 coordinates_min = -1 # minimum coordinate

@@ -6,10 +6,10 @@ using Plots
 # semidiscretization of the linear advection equation
 
 advectionvelocity = 2.0       # Velocity (2.0)
-N = 2                       # Polynomial degree (2, 5)
-NQ = 4                     # Cells (4, 8)
+N = 5                       # Polynomial degree (2, 5)
+NQ = 8                      # Cells (4, 8)
 time_start = 0.0              # Start time (0.0)
-time_end = 2               # End time (2)
+time_end = 2                # End time (2)
 
 # Equation and surface flux
 equations = LinearScalarAdvectionEquation1D(advectionvelocity)
@@ -91,5 +91,5 @@ plot(pd.x,[pd.data sol_e], title = "Zeitpunkt T = 2", label = ["DGSEM" "Exakte L
 #plot!(getmesh(pd))
 
 # Convergence Test
-# path = raw"C:\Users\Mats\Documents\Studium\Semester 10\Wissenschaftliches Rechnen 2\Julia\Trixi\Trixi.jl\src\WR2\Seminar\elixir_advection_basic.jl"
-# convergence_test(path, 4)
+path = raw"C:\Users\Mats\Documents\Studium\Semester 10\Wissenschaftliches Rechnen 2\Julia\Trixi\Trixi.jl\src\WR2\Seminar\elixir_advection_basic.jl"
+convergence_test(path, 4)

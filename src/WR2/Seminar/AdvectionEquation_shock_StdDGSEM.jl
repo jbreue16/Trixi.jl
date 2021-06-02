@@ -6,8 +6,8 @@ using Plots
 # semidiscretization of the linear advection equation
 
 advectionvelocity = 2.0     # Velocity
-N = 3                       # Polynomial degree (3, 5, 7)
-NQ = 4                      # Cells (4, 8, 16)
+N = 7                       # Polynomial degree (3, 5, 7)
+NQ = 16                      # Cells (4, 8, 16)
 time_start = 0.0            # Start time
 time_end = 2                # End time
 
