@@ -7,12 +7,14 @@ initial_condition = initial_condition_convergence_test
 
 # Implement boundary conditions
 # x neg and x_pos are not periodic 
+# boundary_conditions = boundary_condition_periodic
 boundary_conditions = (x_neg=boundary_condition_convergence_test,
                        x_pos=boundary_condition_convergence_test,
-                       y_neg=boundary_condition_convergence_test,
-                       y_pos=boundary_condition_convergence_test)
+                       y_neg=boundary_condition_periodic,
+                       y_pos=boundary_condition_periodic)
 
-# Standard DGSEM Entropy STability
+                       
+# Standard DGSEM Entropy STability  
 # polydeg = 3
 # surface_flux = flux_lax_friedrichs
 # volume_integral = VolumeIntegralWeakForm()
@@ -43,22 +45,14 @@ function mapping(xi_, eta_)
 
     ξ = xi_ 
     η = eta_
-  
-    # x = ξ + 0.15 * cos(0.5 * pi * ξ) * cos((3/2) * pi * η)
-    # y = η + 0.15 * cos(2 * pi * ξ) * cos(0.5 * pi * η)
+
     x = (2 + ξ ) * cos(π * (η + 1))
     y = (2 + ξ ) * sin(π * (η + 1))
 
     return SVector(x, y)
 end
 
-
-
-
-            
-
-
-mesh = CurvedMesh(cells_per_dimension, mapping,periodicity=false)
+mesh = CurvedMesh(cells_per_dimension, mapping,periodicity=(false, true))
 
 
 semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver,boundary_conditions=boundary_conditions)
