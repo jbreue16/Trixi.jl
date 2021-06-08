@@ -3,15 +3,11 @@ using OrdinaryDiffEq
 using Trixi
 
 
-initial_condition = initial_condition_convergence_test
+# initial_condition = initial_condition_convergence_test
+initial_condition = initial_condition_constant
 
-# Implement boundary conditions
-# x neg and x_pos are not periodic 
-# boundary_conditions = boundary_condition_periodic
-boundary_conditions = (x_neg=boundary_condition_convergence_test,
-                       x_pos=boundary_condition_convergence_test,
-                       y_neg=boundary_condition_periodic,
-                       y_pos=boundary_condition_periodic)
+
+
 
                        
 # Standard DGSEM Entropy STability  
@@ -28,7 +24,7 @@ basis = LobattoLegendreBasis(4)
 solver = DGSEM(basis, surface_flux, volume_integral)
 
 
-CFL = 0.9
+CFL = 0.2
 tspan = (0.0, 2)
 ###############################################################################
 # semidiscretization of the compressible Euler equations
@@ -57,27 +53,63 @@ function boundary_condition_farfield_test(u_inner, orientation, direction, x, t,
     surface_flux_function,
     equations::CompressibleEulerEquations2D)
     # Far Field Conditions
-    u_boundary = SVector(2, 1, 1, 1) # (rho, rho_v1, rho_v2, rho_e)
+    u_boundary_i = prim2cons(SVector(1, 0.1, -0.2, 10), equations) # (rho, rho_v1, rho_v2, rho_e)
+    u_boundary_a = prim2cons(SVector(1, 0.1, -0.2, 10), equations)
     # u_boundary = initial_condition_convergence_test(x, t, equations)
   
     # Calculate boundary flux
     if direction in (2, 4) # u_inner is "left" of boundary, u_boundary is "right" of boundary
+        flux = surface_flux_function(u_inner, u_boundary_i, orientation, equations)
+    else # direction == 4 # u_boundary is "left" of boundary, u_inner is "right" of boundary
+        flux = surface_flux_function(u_boundary_a, u_inner, orientation, equations)
+    end
+  
+    return flux
+end
+
+function boundary_condition_farfield_freestream(u_inner, orientation, direction, x, t,
+    surface_flux_function,
+    equations::CompressibleEulerEquations2D)
+    # Far Field Conditions
+    u_boundary = prim2cons(SVector(1, 0.1, -0.2, 10), equations)
+  
+    # Calculate boundary flux
+    if direction == 2 # u_inner is "left" of boundary, u_boundary is "right" of boundary
         flux = surface_flux_function(u_inner, u_boundary, orientation, equations)
-    else # u_boundary is "left" of boundary, u_inner is "right" of boundary
+    else # direction == 4 # u_boundary is "left" of boundary, u_inner is "right" of boundary
         flux = surface_flux_function(u_boundary, u_inner, orientation, equations)
     end
   
     return flux
 end
   
-
+function boundary_condition_freeslip(u_inner, orientation, direction, x, t,
+    surface_flux_function,
+    equations::CompressibleEulerEquations2D)
+    # Freeslip wall Conditions
+    rho, v1, v2, p = cons2prim(u_inner, equations)
+    u_boundary = prim2cons(SVector(rho, -v1, v2, p), equations)
+  
+    # Calculate boundary flux
+    if direction == 2 # u_inner is "left" of boundary, u_boundary is "right" of boundary
+        flux = surface_flux_function(u_inner, u_boundary, orientation, equations)
+    else # direction == 4 # u_boundary is "left" of boundary, u_inner is "right" of boundary
+        flux = surface_flux_function(u_boundary, u_inner, orientation, equations)
+    end
+  
+    return flux
+end
         
 
 # mesh = CurvedMesh(cells_per_dimension, mapping,periodicity=false)
 
 mesh = CurvedMesh(cells_per_dimension, mapping,periodicity=(false, true))
-boundary_conditions = (x_neg=boundary_condition_farfield_test,
-                       x_pos=boundary_condition_farfield_test,
+
+# Implement boundary conditions
+# x neg and x_pos are not periodic 
+# boundary_conditions = boundary_condition_periodic
+boundary_conditions = (x_neg=boundary_condition_farfield_freestream,
+                       x_pos=boundary_condition_farfield_freestream,
                        y_neg=boundary_condition_periodic,
                        y_pos=boundary_condition_periodic)
 
@@ -118,3 +150,9 @@ sol = solve(ode, CarpenterKennedy2N54(williamson_condition=false),
             save_everystep=false, callback=callbacks);
 summary_callback() # print the timer summary
 
+pd=PlotData2D(sol)
+b=plot(pd["rho"])
+plot!(getmesh(pd))
+
+# plot(sol)
+# savefig(plotd, "test.png")
