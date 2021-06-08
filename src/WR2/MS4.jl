@@ -1,4 +1,4 @@
-
+using Plots
 using OrdinaryDiffEq
 using Trixi
 
@@ -20,7 +20,7 @@ solver = DGSEM(basis, surface_flux, volume_integral)
 
 
 CFL = 0.9
-tspan = (0.0, 2)
+tspan = (0.0, 4)
 ###############################################################################
 # semidiscretization of the compressible Euler equations
 
@@ -84,3 +84,6 @@ sol = solve(ode, CarpenterKennedy2N54(williamson_condition=false),
             save_everystep=false, callback=callbacks);
 summary_callback() # print the timer summary
 
+pd=PlotData2D(sol)
+b=plot(pd["rho"])
+plot!(getmesh(pd))

@@ -53,12 +53,33 @@ function mapping(xi_, eta_)
 end
 
 
+function boundary_condition_farfield_test(u_inner, orientation, direction, x, t,
+    surface_flux_function,
+    equations::CompressibleEulerEquations2D)
+    # Far Field Conditions
+    u_boundary = SVector(2, 1, 1, 1) # (rho, rho_v1, rho_v2, rho_e)
+    # u_boundary = initial_condition_convergence_test(x, t, equations)
+  
+    # Calculate boundary flux
+    if direction in (2, 4) # u_inner is "left" of boundary, u_boundary is "right" of boundary
+        flux = surface_flux_function(u_inner, u_boundary, orientation, equations)
+    else # u_boundary is "left" of boundary, u_inner is "right" of boundary
+        flux = surface_flux_function(u_boundary, u_inner, orientation, equations)
+    end
+  
+    return flux
+end
+  
 
+        
 
-            
+# mesh = CurvedMesh(cells_per_dimension, mapping,periodicity=false)
 
-
-mesh = CurvedMesh(cells_per_dimension, mapping,periodicity=false)
+mesh = CurvedMesh(cells_per_dimension, mapping,periodicity=(false, true))
+boundary_conditions = (x_neg=boundary_condition_farfield_test,
+                       x_pos=boundary_condition_farfield_test,
+                       y_neg=boundary_condition_periodic,
+                       y_pos=boundary_condition_periodic)
 
 
 semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver,boundary_conditions=boundary_conditions)
