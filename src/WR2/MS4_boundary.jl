@@ -1,6 +1,7 @@
 
 using OrdinaryDiffEq
 using Trixi
+using Plots
 
 
 # initial_condition = initial_condition_convergence_test
@@ -24,7 +25,7 @@ basis = LobattoLegendreBasis(4)
 solver = DGSEM(basis, surface_flux, volume_integral)
 
 
-CFL = 0.2
+CFL = 0.5
 tspan = (0.0, 2)
 ###############################################################################
 # semidiscretization of the compressible Euler equations
@@ -42,8 +43,8 @@ function mapping(xi_, eta_)
     ξ = xi_ 
     η = eta_
 
-    x = (2 + ξ ) * cos(π * (η + 1))
-    y = (2 + ξ ) * sin(π * (η + 1))
+    x = 100 * (2 + ξ ) * cos(π * (η + 1))
+    y = 100 * (2 + ξ ) * sin(π * (η + 1))
 
     return SVector(x, y)
 end
@@ -71,7 +72,7 @@ function boundary_condition_farfield_freestream(u_inner, orientation, direction,
     surface_flux_function,
     equations::CompressibleEulerEquations2D)
     # Far Field Conditions
-    u_boundary = prim2cons(SVector(1, 0.1, -0.2, 10), equations)
+    u_boundary = SVector(1, 0.1, -0.2, 10)
   
     # Calculate boundary flux
     if direction == 2 # u_inner is "left" of boundary, u_boundary is "right" of boundary
@@ -88,7 +89,7 @@ function boundary_condition_freeslip(u_inner, orientation, direction, x, t,
     equations::CompressibleEulerEquations2D)
     # Freeslip wall Conditions
     rho, v1, v2, p = cons2prim(u_inner, equations)
-    u_boundary = prim2cons(SVector(rho, -v1, v2, p), equations)
+    u_boundary = prim2cons(SVector(rho, -v1, -v2, p), equations)
   
     # Calculate boundary flux
     if direction == 2 # u_inner is "left" of boundary, u_boundary is "right" of boundary
@@ -101,15 +102,16 @@ function boundary_condition_freeslip(u_inner, orientation, direction, x, t,
 end
         
 
-# mesh = CurvedMesh(cells_per_dimension, mapping,periodicity=false)
+mesh = CurvedMesh(cells_per_dimension, mapping,periodicity=(false,true))
 
-mesh = CurvedMesh(cells_per_dimension, mapping,periodicity=(false, true))
+#mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max, periodicity=(false, true))
+#CurvedMesh(cells_per_dimension, coordinates_min , c mapping,periodicity=(false, true))
 
 # Implement boundary conditions
 # x neg and x_pos are not periodic 
 # boundary_conditions = boundary_condition_periodic
-boundary_conditions = (x_neg=boundary_condition_farfield_freestream,
-                       x_pos=boundary_condition_farfield_freestream,
+boundary_conditions = (x_neg=boundary_condition_freeslip,
+                       x_pos=boundary_condition_freeslip,
                        y_neg=boundary_condition_periodic,
                        y_pos=boundary_condition_periodic)
 
