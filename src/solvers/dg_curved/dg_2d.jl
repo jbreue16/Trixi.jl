@@ -240,6 +240,7 @@ function calc_interface_flux!(cache, u,
 end
 
 ##############BLZ: minor change to include volume two point fluxes for Flux Differencing Form. (Below is the original function)
+# this function is not neccessary anymore since we implementet Chandrashekar with normal vector as input
 # @inline function calc_interface_flux!(surface_flux_values, left_element, right_element,
 #     orientation, u,
 #     mesh::CurvedMesh{2}, equations,

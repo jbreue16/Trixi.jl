@@ -11,9 +11,8 @@ CFL = 0.9
 latex = false
 # uncomment analysis_callback to get enrtopy/energy analysis
 
-# surface Flux can either be Lax Friedrichs or the volume two point flux 
-surface_flux = flux_lax_friedrichs
-surface_flux = FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))
+# surface Flux can either be Lax Friedrichs or the volume two point flux with or without dissipation
+surface_flux = FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive)) #flux_lax_friedrichs
 volume_flux  = flux_chandrashekar
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
 

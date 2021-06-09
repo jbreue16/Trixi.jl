@@ -20,8 +20,8 @@ initial_condition = initial_condition = initial_condition_weak_blast_wave
 # solver = DGSEM(polydeg = polydeg, surface_flux = surface_flux, volume_integral = volume_integral )
 
 # CHandrashekar DGSEM Entropy STability
-# surface Flux can either be Lax Friedrichs or the volume two point flux 
-surface_flux = flux_lax_friedrichs #FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))
+# surface Flux can either be Lax Friedrichs or the volume two point flux with or without dissipation
+surface_flux = FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive)) # flux_lax_friedrichs #
 volume_flux  = flux_chandrashekar
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
 basis = LobattoLegendreBasis(4)
