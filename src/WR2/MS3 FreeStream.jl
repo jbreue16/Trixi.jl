@@ -14,7 +14,7 @@ equations = CompressibleEulerEquations2D(1.4)
 initial_condition = initial_condition_constant
 
 
-surface_flux = flux_lax_friedrichs# FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))# flux_lax_friedrichs
+surface_flux = FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))
 basis = LobattoLegendreBasis(3)
 volume_flux  = flux_chandrashekar 
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)

@@ -12,7 +12,7 @@ using Trixi
 # surface_flux = flux_central
 # initial_condition = initial_condition_convergence_test
 
-initial_condition = initial_condition_weak_blast_wave
+initial_condition = initial_condition_convergence_test # initial_condition_weak_blast_wave
 
 # Standard DGSEM Entropy STability
 # polydeg = 3
@@ -22,11 +22,11 @@ initial_condition = initial_condition_weak_blast_wave
 
 
 # CHandrashekar DGSEM Entropy STability
-# surface Flux can either be Lax Friedrichs or the volume two point flux 
-surface_flux = flux_lax_friedrichs #FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))
+# surface Flux can either be Lax Friedrichs or the chandrashekar flux with or without dissipation (Entropy Stability/Conservation) 
+surface_flux = flux_chandrashekar # FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive)) # flux_lax_friedrichs #
 volume_flux  = flux_chandrashekar
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
-basis = LobattoLegendreBasis(3)
+basis = LobattoLegendreBasis(4)
 solver = DGSEM(basis, surface_flux, volume_integral)
 
 
