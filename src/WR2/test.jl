@@ -6,18 +6,18 @@ using Plots
 
 
 tspan = (0.0, 0.1)
-CFL = 0.5
+CFL = 0.8
 cells_per_dimension = (16, 16) # 40 und 5 bis knapp 8; 32 und 5 bis gut 7
-N = 3
-
-visualization = VisualizationCallback(interval=100)#, clims=(0,1)
+N = 5
+# plot_creator=Trixi.save_plot #, clims=(0,1) speicherung, skala
+visualization = VisualizationCallback(interval=1000)
 save_analysis = false # false is default
 
 function WR2_initial_condition_constant(x, t, equations::CompressibleEulerEquations2D)
     rho = 1.0
-    rho_v1 = 0.0
+    rho_v1 = 0.38
     rho_v2 = 0
-    rho_e = 10
+    rho_e = 25
     return SVector(rho, rho_v1, rho_v2, rho_e)
   end
 initial_condition = WR2_initial_condition_constant
@@ -46,8 +46,8 @@ function mapping(xi_, eta_)
     ξ = xi_ 
     η = eta_
 
-    x = 2 * (2 + ξ ) * cos(π * (η + 1))
-    y = 2 * (2 + ξ ) * sin(π * (η + 1))
+    x = 5 * (2 + ξ ) * cos(π * (η + 1))
+    y = 5 * (2 + ξ ) * sin(π * (η + 1))
 
     return SVector(x, y)
 end
@@ -57,18 +57,18 @@ function boundary_condition_stream(u_inner, orientation, direction, x, t,
     surface_flux_function,
     equations::CompressibleEulerEquations2D)
     rho = 1.0
-    rho_v1 = 0.5
+    rho_v1 = 0.38
     rho_v2 = 0
     rho_e = 25
-    if -1 < x[2] < 1 && (x[1] < 0)
-        # if t < π/2
-            u_boundary = SVector(rho, rho_v1, rho_v2, rho_e)#*sin(t*(π/2)) #cos(π/2*x[1])* v
-        # else 
-        #     u_boundary = SVector(rho, rho_v1, rho_v2, rho_e) 
-        # end
-    else
+    # if -6 < x[2] < 6 && (x[1] < 0)# -6 < x[2] < 6 && 
+    #     # if t < π/2
+    #         u_boundary = SVector(rho, rho_v1, rho_v2, rho_e)#*sin(t*(π/2)) #cos(π/2*x[1])* v
+    #     # else 
+    #     #     u_boundary = SVector(rho, rho_v1, rho_v2, rho_e) 
+    #     # end
+    # else
         u_boundary = WR2_initial_condition_constant(x, t, equations)
-    end
+    # end
     # Calculate boundary flux
     if direction in (2, 4) # u_inner is "left" of boundary, u_boundary is "right" of boundary
         flux = surface_flux_function(u_inner, u_boundary, orientation, equations)
@@ -84,7 +84,7 @@ function boundary_condition_constant_farfield( u_inner, orientation, direction, 
     equations::CompressibleEulerEquations2D)
     # Far Field Conditions
     rho = 1.0
-    rho_v1 = 0.5
+    rho_v1 = 0.38
     rho_v2 = 0
     rho_e = 25
     u_boundary = SVector(rho, rho_v1, rho_v2, rho_e)
@@ -156,7 +156,7 @@ analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_anal
                                                 )
 
 callbacks = CallbackSet(summary_callback, stepsize_callback, analysis_callback
-                        # ,visualization 
+                        ,visualization 
                         # ,save_solution            
                         )
 
@@ -179,3 +179,20 @@ summary_callback() # print the timer summary
 
 # plot(sol)
 # # savefig(plotd, "test.png")
+
+# compute the Mach number
+# i = 1
+# mach = zeros(16^2*4^2) # cells^2*(N+1)^2
+# while i < 16384 #cells^2*(N+1)^2*4 every four steps
+#     # every four steps is the same conservative variable
+#     # rho = sol.u[i]
+#     # v1_rho = sol.u[i+1]
+#     # v2_rho = sol.u[i+2]
+#     # e_rho = sol.u[i+3]
+#     prims = cons2prims(sol.u[1][i:i+3])
+#     v_norm = sqrt(prims[2]^2+prims[3]^2)
+    
+#     c = sqrt(1.4*(prims[1]/prims[4]))#  dichte durch druck
+#     mach[i] = v_norm/c 
+#     i = i+4
+# end
