@@ -4,10 +4,25 @@
 
 The compressible Euler equations for an ideal gas in two space dimensions.
 """
+# Vorher:
+# struct CompressibleEulerEquations2D{RealT<:Real} <: AbstractCompressibleEulerEquations{2, 4}
+#   gamma::RealT
+# end
+
 struct CompressibleEulerEquations2D{RealT<:Real} <: AbstractCompressibleEulerEquations{2, 4}
   gamma::RealT
+  viscous::Bool # BLZ: for viscous flux dispatch
+  Pr::RealT # BLZ: Prandtl number 
+  lambda::RealT # BLZ: per default -2/3 (stokes hypothesis)
 end
 
+function CompressibleEulerEquations2D(RealT::Real; viscous=false, Pr = 0.72, lambda=-2/3)
+  return CompressibleEulerEquations2D(RealT, viscous, Pr, lambda)
+end
+# Auxiliary Equation to solve the auxiliary system q = ∇u for viscous flows
+struct AuxiliaryEquation <: AbstractCompressibleEulerEquations{2, 4} end
+varnames(::typeof(cons2cons), ::AuxiliaryEquation) = ("rho", "rho_v1", "rho_v2", "rho_e")
+varnames(::typeof(cons2prim), ::AuxiliaryEquation) = ("rho", "v1", "v2", "p")
 
 varnames(::typeof(cons2cons), ::CompressibleEulerEquations2D) = ("rho", "rho_v1", "rho_v2", "rho_e")
 varnames(::typeof(cons2prim), ::CompressibleEulerEquations2D) = ("rho", "v1", "v2", "p")
@@ -634,6 +649,40 @@ end
 end
 
 
+# viscous flux for single point
+
+@inline function viscous_flux(u, q, orientation::Integer, equations::CompressibleEulerEquations2D)
+  rho, rho_v1, rho_v2, rho_e = u
+  v1 = rho_v1/rho
+  v2 = rho_v2/rho
+  rho_x, rho_v1_x, rho_v2_x, rho_e_x, rho_y, rho_v1_y, rho_v2_y, rho_e_y = q
+  v1_x = (1/rho)*(rho_v1_x - rho_x* v1)
+  v2_x = (1/rho)*(rho_v2_x - rho_x* v2)
+  e_x = (1/rho)*(rho_e_x - rho_x* (rho_e/rho))
+  v1_y = (1/rho)*(rho_v1_y - rho_y* v1)
+  v2_y = (1/rho)*(rho_v2_y - rho_y* v2)
+  e_y = (1/rho)*(rho_e_y - rho_y* (rho_e/rho))
+  
+  if orientation == 1
+    f1 = 0
+    f2 = 2* v1_x + equations.lambda* (v1_x + v2_y)
+    f3 = v2_x + v1_y
+    f4 = v1* (2* v1_x + equations.lambda*(v1_x + v2_y)) + v2* (v2_x + v1_y) + (equations.gamma/equations.Pr) * e_x
+  else
+    f1 = 0
+    f2 = v2_x + v1_y
+    f3 = 2* v2_x + equations.lambda* (v1_x + v2_y)
+    f4 = v1* (v2_x + v1_y) + v2* (2* v2_y + equations.lambda* (v1_x + v2_y)) + (equations.gamma/equations.Pr) * e_y
+  end
+  return SVector(f1, f2, f3, f4)
+end
+# to use the implemented code to calculate the auxiliary system q = ∇u with DGSEM
+function flux(u, orientation::Integer, equations::AuxiliaryEquation)
+  return u
+end
+function flux(u, normal::AbstractVector, equations::AuxiliaryEquation)
+  return u
+end
 """
     function flux_shima_etal(u_ll, u_rr, orientation, equations::CompressibleEulerEquations2D)
 

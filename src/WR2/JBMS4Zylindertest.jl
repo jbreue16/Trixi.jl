@@ -12,6 +12,7 @@ N = 5
 # plot_creator=Trixi.save_plot #, clims=(0,1) speicherung, skala
 visualization = VisualizationCallback(interval=1000)
 save_analysis = false # false is default
+equations = CompressibleEulerEquations2D(1.4)
 
 function WR2_initial_condition_constant(x, t, equations::CompressibleEulerEquations2D)
     rho = 1.0
@@ -35,8 +36,6 @@ solver = DGSEM(basis, surface_flux, volume_integral)
 
 ###############################################################################
 # semidiscretization of the compressible Euler equations
-
-equations = CompressibleEulerEquations2D(1.4)
 
 
 
