@@ -3,14 +3,14 @@ using OrdinaryDiffEq
 using Trixi
 using Plots
 
-v = 10
+v1 = 0.38
 tspan = (0.0, 1)
 tspan_max = 0.3
 function WR2_initial_condition_constant(x, t, equations::CompressibleEulerEquations2D)
     rho = 1.0
-    rho_v1 = 0
+    rho_v1 = v1
     rho_v2 = 0
-    rho_e = 10.0
+    rho_e = 25.0
     return SVector(rho, rho_v1, rho_v2, rho_e)
   end
 initial_condition = WR2_initial_condition_constant
@@ -52,15 +52,15 @@ function boundary_condition_stream(u_inner, orientation, direction, x, t,
     surface_flux_function,
     equations::CompressibleEulerEquations2D)
     # Far Field Conditions
-    if -1 < x[2] < 1 && (x[1] < 1)
-        if t < π/2
-            u_boundary = SVector(1, 2 , 0, 10) #+ 1* sin(π*t/10)*10
-        else 
-            u_boundary = SVector(1, 2, 0, 10) 
-        end
-    else
-        u_boundary = SVector(1, 0, 0, 10)
-    end
+    # if (x[1] < 1)
+    #     # if t < π/2
+    #     #     u_boundary = SVector(1, 0.38 , 0, 10) #+ 1* sin(π*t/10)*10
+    #     # else 
+    #     #     u_boundary = SVector(1, 0.38, 0, 10) 
+    #     # end
+    # else
+        u_boundary = SVector(1, v1, 0, 25)
+    # end
     # Calculate boundary flux
     if direction in (2, 4) # u_inner is "left" of boundary, u_boundary is "right" of boundary
         flux = surface_flux_function(u_inner, u_boundary, orientation, equations)
@@ -75,7 +75,7 @@ function boundary_condition_constant_farfield( u_inner, orientation, direction, 
     surface_flux_function,
     equations::CompressibleEulerEquations2D)
     # Far Field Conditions
-    u_boundary = SVector(1, 0.1*v, 0, 10)
+    u_boundary = SVector(1, v1, 0, 10)
   
     # Calculate boundary flux
     if direction in (2, 4) # u_inner is "left" of boundary, u_boundary is "right" of boundary

@@ -79,8 +79,8 @@ end
 ###########################################################################################
 
 
-# boundary_conditions = boundary_condition_periodic
-boundary_conditions = boundary_condition_constant
+boundary_conditions = boundary_condition_periodic
+# boundary_conditions = boundary_condition_constant
 eq = Trixi.AuxiliaryEquation()
 equations = CompressibleEulerEquations2D(1.4)
 
