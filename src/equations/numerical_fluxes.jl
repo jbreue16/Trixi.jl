@@ -16,13 +16,14 @@ DG method (except floating point errors).
   # Average regular fluxes
   return 0.5 * (f_ll + f_rr)
 end
+
 # used to solve Auxiliary Equation for viscous flux
 @inline function flux_central_auxiliary(u_ll, u_rr, orientation_or_normal, equations::AbstractEquations)
   # Calculate regular 1D fluxes
   f_ll = flux(u_ll, orientation_or_normal, equations)
   f_rr = flux(u_rr, orientation_or_normal, equations)
 
-  return 0.5 * (f_rr - f_ll)
+  return 0.5 * (f_rr + f_ll)
 end
 
 

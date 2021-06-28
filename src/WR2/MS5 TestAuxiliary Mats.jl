@@ -31,7 +31,8 @@ function WR2_initial_condition_linear(x, t, equations::Trixi.AbstractEquations)
     rho_v1 = x[1]
     rho_v2 = x[1]
     rho_e = x[1] # + 0.5
-    return SVector(rho, rho_v1, rho_v2, rho_e)
+    # return SVector(rho, rho_v1, rho_v2, rho_e)
+    return SVector(x[1], x[1]^2, x[1]^3, x[1]^2)
 end
 function WR2_initial_condition_convergence_test(x, t, equations::Trixi.AbstractEquations)
     # c = 2
@@ -53,21 +54,21 @@ function WR2_initial_condition_convergence_test(x, t, equations::Trixi.AbstractE
   
     return SVector(rho, rho_v1, rho_v2, rho_e)
 end
-function boundary_condition_x(u_inner, orientation, direction, x, t,
-  surface_flux_function,
-  equations::Trixi.AbstractEquations)
-  # Far Field Conditions
-  u_boundary = SVector(x[1], x[1], x[1], x[1])
+function boundary_condition_constant( u_inner, orientation, direction, x, t,
+    surface_flux_function,
+    equations::Trixi.AbstractEquations)
+    # Far Field Conditions
+    u_boundary = initial_condition(x , t, equations)
 
-  # Calculate boundary flux
-  if direction in (2, 4) # u_inner is "left" of boundary, u_boundary is "right" of boundary
-      flux = surface_flux_function(u_inner, u_boundary, orientation, equations)
-  else # direction == 4 # u_boundary is "left" of boundary, u_inner is "right" of boundary
-      flux = surface_flux_function(u_boundary, u_inner, orientation, equations)
+    # Calculate boundary flux
+    if direction in (2, 4) # u_inner is "left" of boundary, u_boundary is "right" of boundary
+        flux = surface_flux_function(u_inner, u_boundary, orientation, equations)
+    else # direction == 4 # u_boundary is "left" of boundary, u_inner is "right" of boundary
+        flux = surface_flux_function(u_boundary, u_inner, orientation, equations)
+    end
+
+    return flux
   end
-
-  return flux
-end
 function wrap_array(u_ode::AbstractVector, mesh::Union{TreeMesh{2},CurvedMesh{2},UnstructuredQuadMesh}, equations, dg::DG, cache)
     @boundscheck begin
         @assert length(u_ode) == nvariables(equations) * nnodes(dg)^ndims(mesh) * nelements(dg, cache)
@@ -78,12 +79,13 @@ end
 ###########################################################################################
 
 
-boundary_conditions = boundary_condition_periodic
+# boundary_conditions = boundary_condition_periodic
+boundary_conditions = boundary_condition_constant
 eq = Trixi.AuxiliaryEquation()
 equations = CompressibleEulerEquations2D(1.4)
 
 N = 9
-c = 1
+c = 2
 cells_per_dimension = (c, c)
 coordinates_min = (-1.0, -1.0)
 coordinates_max = (1.0,  1.0)
@@ -109,7 +111,7 @@ dg = DGSEM(basis, surface_flux, volume_integral)
 #                        y_pos=boundary_condition_periodic)
 
 solver = DGSEM(basis, surface_flux, volume_integral)
-initial_condition =   WR2_initial_condition_convergence_test # WR2_initial_condition_convergence_test # WR2_initial_condition_constant # WR2_initial_condition_linear
+initial_condition =   WR2_initial_condition_linear # WR2_initial_condition_convergence_test # WR2_initial_condition_constant # WR2_initial_condition_linear
 semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver, boundary_conditions=boundary_conditions)
 ode = semidiscretize(semi, (0.0, 0.0))
 
@@ -181,6 +183,6 @@ u_ABL = wrap_array(ode.u0, mesh, equations, solver, semi.cache)
 
 
 # Test for constant inital condition
-# q1,q1 - #var - #nodes_x - #nodes_y - #cells_X - #cells_y
+# q1,q1 - #var - #nodes_x - #nodes_y - #cells
 println(maximum(q[2, :, :, 2:N - 1, :]))
 println(maximum(q[1, :, 2:N - 1, :, :]))

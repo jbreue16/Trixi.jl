@@ -450,7 +450,6 @@ end
 
 function calc_boundary_flux!(cache, u, t, boundary_conditions::Union{NamedTuple,Tuple},
                              mesh::CurvedMesh{2}, equations, dg::DG)
-                             error("hier!")
     @unpack surface_flux = dg
     if typeof(equations) == AuxiliaryEquation surface_flux = flux_central end
     @unpack surface_flux_values = cache.elements
@@ -518,7 +517,7 @@ end
   @unpack node_coordinates, contravariant_vectors = cache.elements
   @unpack surface_flux = dg
   if typeof(equations) == AuxiliaryEquation  surface_flux = flux_central end # BLZ
- error("hi")
+  error("hi")
 
   u_inner = get_node_vars(u, equations, dg, node_indices..., element)
   x = get_node_coords(node_coordinates, equations, dg, node_indices..., element)
@@ -532,7 +531,7 @@ end
   surface_flux_values[v, surface_node_indices..., direction, element] = flux[v]
   error(flux[v])
   end
-  end
+end
 
   
 function apply_jacobian!(du,
