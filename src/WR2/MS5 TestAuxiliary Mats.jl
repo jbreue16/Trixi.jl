@@ -85,7 +85,7 @@ eq = Trixi.AuxiliaryEquation()
 equations = CompressibleEulerEquations2D(1.4)
 
 N = 9
-c = 2
+c = 1
 cells_per_dimension = (c, c)
 coordinates_min = (-1.0, -1.0)
 coordinates_max = (1.0,  1.0)
@@ -111,7 +111,7 @@ dg = DGSEM(basis, surface_flux, volume_integral)
 #                        y_pos=boundary_condition_periodic)
 
 solver = DGSEM(basis, surface_flux, volume_integral)
-initial_condition =   WR2_initial_condition_linear # WR2_initial_condition_convergence_test # WR2_initial_condition_constant # WR2_initial_condition_linear
+initial_condition =   WR2_initial_condition_convergence_test # WR2_initial_condition_convergence_test # WR2_initial_condition_constant # WR2_initial_condition_linear
 semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver, boundary_conditions=boundary_conditions)
 ode = semidiscretize(semi, (0.0, 0.0))
 
@@ -175,7 +175,7 @@ initial_condition2 = ABL_initial_condition_convergence_test #
 semi2 = SemidiscretizationHyperbolic(mesh, equations, initial_condition2, solver2, boundary_conditions=boundary_conditions)
 ode2 = semidiscretize(semi, (0.0, 0.0))
 
-u_ABL = wrap_array(ode.u0, mesh, equations, solver, semi.cache)
+u_ABL = wrap_array(ode2.u0, mesh, equations, solver2, semi2.cache)
 
 # sol = solve(ode, CarpenterKennedy2N54(williamson_condition=false),
 #     dt=1.0, # solve needs some value here but it will be overwritten by the stepsize_callback
