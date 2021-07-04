@@ -45,7 +45,7 @@ function WR2_initial_condition_convergence_test(x, t, equations::Trixi.AbstractE
     # rho_v1 = ini
     # rho_v2 = ini
     # rho_e = ini^2
-
+  
     rho = sin(pi * x[1])
     rho_v1 = sin(pi * x[1])
     rho_v2 = sin(pi * x[1])
