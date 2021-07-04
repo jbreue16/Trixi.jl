@@ -80,8 +80,8 @@ mesh = CurvedMesh(cells_per_dimension, mapping,periodicity=(false,true))
 # Implement boundary conditions
 # x neg and x_pos are not periodic 
 # boundary_conditions = boundary_condition_periodic
-boundary_conditions = (x_neg=boundary_condition_farfield,
-                       x_pos=boundary_condition_farfield,
+boundary_conditions = (x_neg=boundary_condition_constant_farfield,
+                       x_pos=boundary_condition_constant_farfield,
                        y_neg=boundary_condition_periodic,
                        y_pos=boundary_condition_periodic)
 
