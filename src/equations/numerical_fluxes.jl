@@ -26,6 +26,11 @@ end
   return 0.5 * (f_rr + f_ll)
 end
 
+@inline function surface_flux_plus_viscous_central(u_ll, u_rr, q1_ll, q1_rr, q2_ll, q2_rr, orientation_or_normal, equations::AbstractEquations, surface_flux)
+  numerical_flux = surface_flux(u_ll, u_rr, orientation_or_normal, equations)
+  numerical_flux += 0.5* (viscous_flux(u_ll, q1_ll, q2_ll, orientation, equations) + viscous_flux(u_rr, q1_rr, q2_rr, orientation_or_normal, equations))
+  return numerical_flux
+end
 
 """
     FluxPlusDissipation(numerical_flux, dissipation)
