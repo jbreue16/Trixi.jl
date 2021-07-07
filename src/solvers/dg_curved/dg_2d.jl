@@ -503,7 +503,7 @@ end
     @unpack contravariant_vectors = cache.elements
     if typeof(equations) == AuxiliaryEquation # BLZ: to solve the auxiliary system
         surface_flux = flux_central_auxiliary 
-    else if typeof(equations) == CompressibleEulerEquations2D{Float64} && equations.viscous # BLZ: to add the central flux for viscous terms 
+    elseif typeof(equations) == CompressibleEulerEquations2D{Float64} && equations.viscous # BLZ: to add the central flux for viscous terms 
         calc_interface_flux_viscous!(surface_flux_values, left_element, right_element,
                                       orientation, u,
                                       mesh, equations,
