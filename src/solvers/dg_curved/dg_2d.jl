@@ -7,13 +7,16 @@ function rhs!(du, u, t,
 
   # solve the auxilary system for viscous flows
     if equations.viscous == true
-        error("viscous!") # BLZ TODO: add q to cache 
+        error("viscous!") # BLZ TODO: add q1, q2 to cache, then q1, q2 .= zero(eltype(q))
         #  q is an array with one dimension more than u: q = [∂u/∂x] [∂u/∂y]
-        q = zeros(2, size(u,1), size(u,2), size(u,3), size(u,4))
-        @timeit_debug timer() "auxiliary system" calc_nabla_u!(
-        q, u, t, mesh::CurvedMesh{2}, eq::AuxiliaryEquation,
-        boundary_conditions,
-        dg::DG, cache)
+        # @unpack q1 = cache.q1
+        # @unpack q2 = cahce.q2
+        q1 = similar(du) # set to 0
+        q2 = similar(du)
+        @timeit_debug timer() "auxiliary system" calc_nabla_u!(q1,
+        q2, u, t, mesh, Trixi.AuxiliaryEquation(),
+        boundary_conditions, # hier noch unstetige boundaries schwierig
+        dg, cache)
     end
 
   # Calculate volume integral
@@ -46,13 +49,11 @@ function rhs!(du, u, t,
 end
 
 # calculation of the auxilary system q = ∇u for viscous flows
-function calc_nabla_u!(q, u, t,
+function calc_nabla_u!(q1, q2, u, t,
     mesh::CurvedMesh{2}, equations,
     boundary_conditions,
     dg::DG, cache)
     # use the standard weak form DGSEM to calculate ∇u
-    q1 = zeros(size(u,1), size(u,2), size(u,3), size(u,4))
-    q2 = zeros(size(u,1), size(u,2), size(u,3), size(u,4))
     # Calculate volume integral
     calc_volume_integral_auxiliary!(q1, q2, u,
         mesh::CurvedMesh{2}, equations::AuxiliaryEquation,
@@ -70,9 +71,6 @@ function calc_nabla_u!(q, u, t,
     apply_jacobian!(
         q2, mesh, equations, dg, cache)
 
-        q[1, :, :, :, :] = q1
-        q[2, :, :, :, :] = q2
-
     return nothing
 end
 
@@ -81,58 +79,57 @@ function calc_surface_integral_auxiliary!(q1, q2, u, t,
                                           dg::DG, cache,
                                           boundary_conditions)
 # values are stored in surface_flux_values and calculated with u; then copied to q
-@unpack elements = cache
-# interface flux, dispatch with AuxiliaryEquation -> f(u) = u
-@threaded for element in eachelement(dg, cache)
+    @unpack elements = cache
+# calc surface integral for q1
+    @threaded for element in eachelement(dg, cache)
     # Interfaces in negative directions
     # Faster version of "for orientation in (1, 2)"
 
-    # Interfaces in x-direction (`orientation` = 1)
-        calc_interface_flux!(elements.surface_flux_values,
+    # Interfaces for u_x (1 dispatch) and in x-direction (`orientation` = 1)
+        calc_interface_flux_auxiliary!(1, elements.surface_flux_values,
                          elements.left_neighbors[1, element],
                          element, 1, u, mesh, equations, dg, cache)
 
-    # Interfaces in y-direction (`orientation` = 2)
-        calc_interface_flux!(elements.surface_flux_values,
+    # Interfaces Interfaces for u_x (1 dispatch) and in y-direction (`orientation` = 2)
+        calc_interface_flux_auxiliary!(1, elements.surface_flux_values,
                          elements.left_neighbors[2, element],
                          element, 2, u, mesh, equations, dg, cache)
     end
-calc_boundary_flux!(cache, u, t, boundary_conditions, mesh, equations, dg)
-# adds the surface integral to q1, q2
-add_surface_integral_auxiliary!(q1, q2, mesh, equations, dg, cache)
+# boundary flux with nabla = 1 dispatch for u_x
+    calc_boundary_flux_auxiliary!(cache, u, t, boundary_conditions, mesh, equations, dg, 1)
+# add the surface integral to q1
+    calc_surface_integral!(q1, mesh, equations, dg, cache)
+
+# calc surface integral for q2. The previously calculated surface fluxes are overwritten.
+    @threaded for element in eachelement(dg, cache)
+        # Interfaces in negative directions
+        # Faster version of "for orientation in (1, 2)"
+    
+        # Interfaces Interfaces for u_y (2 dispatch) and in x-direction (`orientation` = 1)
+        calc_interface_flux_auxiliary!(2, elements.surface_flux_values,
+                             elements.left_neighbors[1, element],
+                             element, 1, u, mesh, equations, dg, cache)
+    
+        # Interfaces Interfaces for u_y (2 dispatch) and in y-direction (`orientation` = 2)
+        calc_interface_flux_auxiliary!(2, elements.surface_flux_values,
+                             elements.left_neighbors[2, element],
+                             element, 2, u, mesh, equations, dg, cache)
+    end
+    # boundary flux with nabla = 2 dispatch for u_y
+    calc_boundary_flux_auxiliary!(cache, u, t, boundary_conditions, mesh, equations, dg, 2)
+    # add the surface integral to q2
+    calc_surface_integral!(q2, mesh, equations, dg, cache)
+
     return nothing
-end
-
-function add_surface_integral_auxiliary!(q1, q2, mesh::CurvedMesh{2},
-    equations, dg::DGSEM, cache)
-@unpack boundary_interpolation = dg.basis
-@unpack surface_flux_values = cache.elements
-
-@threaded for element in eachelement(dg, cache)
-for l in eachnode(dg)
-for v in eachvariable(equations)
-# surface at -x
-q1[v, 1,          l, element] -= surface_flux_values[v, l, 1, element] * boundary_interpolation[1,          1]
-# surface at +x
-q1[v, nnodes(dg), l, element] += surface_flux_values[v, l, 2, element] * boundary_interpolation[nnodes(dg), 2]
-# surface at -y
-q2[v, l, 1,          element] -= surface_flux_values[v, l, 3, element] * boundary_interpolation[1,          1]
-# surface at +y
-q2[v, l, nnodes(dg), element] += surface_flux_values[v, l, 4, element] * boundary_interpolation[nnodes(dg), 2]
-end
-end
-end
-
-return nothing
 end
 
 function calc_volume_integral_auxiliary!(q1, q2, u,
                                         mesh::CurvedMesh{2}, equations::AuxiliaryEquation,
                                         dg::DGSEM, cache)
-@unpack derivative_dhat = dg.basis
-@unpack contravariant_vectors = cache.elements
+    @unpack derivative_dhat = dg.basis
+    @unpack contravariant_vectors = cache.elements
 
-@threaded for element in eachelement(dg, cache)
+    @threaded for element in eachelement(dg, cache)
         for j in eachnode(dg), i in eachnode(dg)
             # flux(u) = - u !
             u_node = - get_node_vars(u, equations, dg, i, j, element)
@@ -140,27 +137,30 @@ function calc_volume_integral_auxiliary!(q1, q2, u,
       # Compute the contravariant by taking the scalar product of the
       # first contravariant vector Ja^1 and u
             Ja11, Ja12 = get_contravariant_vector(1, contravariant_vectors, i, j, element)
-            contravariant_u_x = Ja11 * u_node + Ja12 * u_node
-# if contravariant_u[1] > 1 error(contravariant_u) end
+            contravariant_u_x1 = Ja11 * u_node
+            contravariant_u_y1 = Ja12 * u_node
             for ii in eachnode(dg)
-                # error(derivative_dhat)
-                integral_contribution = derivative_dhat[ii, i] * contravariant_u_x
-                add_to_node_vars!(q1, integral_contribution, equations, dg, ii, j, element)
-                # error(q1[:, ii, j, element])
+                integral_contribution1 = derivative_dhat[ii, i] * contravariant_u_x1
+                integral_contribution2 = derivative_dhat[ii, i] * contravariant_u_y1
+                add_to_node_vars!(q1, integral_contribution1, equations, dg, ii, j, element)
+                add_to_node_vars!(q2, integral_contribution2, equations, dg, ii, j, element)
             end
 
       # Compute the contravariant by taking the scalar product of the
       # second contravariant vector Ja^2 and u
             Ja21, Ja22 = get_contravariant_vector(2, contravariant_vectors, i, j, element)
-            contravariant_u_y = Ja21 * u_node + Ja22 * u_node
+            contravariant_u_x2 = Ja21 * u_node
+            contravariant_u_y2 = Ja22 * u_node
 
             for jj in eachnode(dg)
-                integral_contribution = derivative_dhat[jj, j] * contravariant_u_y
-                add_to_node_vars!(q2, integral_contribution, equations, dg, i, jj, element)
+                integral_contribution1 = derivative_dhat[jj, j] * contravariant_u_x2
+                integral_contribution2 = derivative_dhat[jj, j] * contravariant_u_y2
+                add_to_node_vars!(q1, integral_contribution1, equations, dg, i, jj, element)
+                add_to_node_vars!(q2, integral_contribution2, equations, dg, i, jj, element)
             end
         end
     end
-return nothing
+    return nothing
 end
 
 function calc_volume_integral!(du, u,
@@ -254,18 +254,6 @@ function calc_volume_integral!(du, u,
     nonconservative_terms::Val{false}, equations,
     volume_integral::VolumeIntegralFluxDifferencing,
     dg::DGSEM, cache)
-# First viscous computations, then non-viscous computations
-if equations.viscous == true
-    error("viscous")
-    # first solve for q 
-
-    # then compute viscous fluxes 
-    calc_viscous_volume_integral!(du, u,
-    mesh::CurvedMesh{2},
-    nonconservative_terms::Val{false}, equations,
-    volume_integral::VolumeIntegralFluxDifferencing,
-    dg::DGSEM, cache)
-end
 
 # separate and parallel computation for each element 
     @threaded for element in eachelement(dg, cache)
@@ -311,7 +299,7 @@ end
                 u_node_ii = get_node_vars(u, equations, dg, ii, j, element)
                 flux1 = volume_integral.volume_flux(u_node, u_node_ii, 1, equations)
                 flux2 = volume_integral.volume_flux(u_node, u_node_ii, 2, equations)
-                contravariant_flux1 = 0.5*(Ja11+Ja11_) * flux1 + 0.5*(Ja12+Ja12_) * flux2
+                contravariant_flux1 = 0.5 * (Ja11 + Ja11_) * flux1 + 0.5 * (Ja12 + Ja12_) * flux2
                 integral_contribution = 2 * derivative_matrix[i, ii] * contravariant_flux1
                 add_to_node_vars!(du, integral_contribution, equations, dg, i,  j, element)
                 integral_contribution = 2 * derivative_matrix[ii, i] * contravariant_flux1
@@ -346,7 +334,7 @@ end
                 u_node_jj = get_node_vars(u, equations, dg, i, jj, element)
                 flux1 = volume_integral.volume_flux(u_node, u_node_jj, 1, equations)
                 flux2 = volume_integral.volume_flux(u_node, u_node_jj, 2, equations)
-                contravariant_flux2 = 0.5*(Ja22 + Ja22_) * flux2 + 0.5*(Ja21+Ja21_) * flux1
+                contravariant_flux2 = 0.5 * (Ja22 + Ja22_) * flux2 + 0.5 * (Ja21 + Ja21_) * flux1
                 integral_contribution =  2 * derivative_matrix[j, jj] * contravariant_flux2
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, j,  element)
                 integral_contribution =  2 * derivative_matrix[jj, j] * contravariant_flux2
@@ -375,6 +363,29 @@ function calc_interface_flux!(cache, u,
         calc_interface_flux!(elements.surface_flux_values,
                          elements.left_neighbors[2, element],
                          element, 2, u, mesh, equations, dg, cache)
+    end
+
+    return nothing
+end
+
+function calc_interface_flux_auxiliary!(nabla, cache, u,
+    mesh::CurvedMesh{2},
+    equations, dg::DG)
+    @unpack elements = cache
+
+    @threaded for element in eachelement(dg, cache)
+# Interfaces in negative directions
+# Faster version of "for orientation in (1, 2)"
+
+# Interfaces in x-direction (`orientation` = 1)
+        calc_interface_flux_auxiliary!(nabla, elements.surface_flux_values,
+elements.left_neighbors[1, element],
+element, 1, u, mesh, equations, dg, cache)
+
+# Interfaces in y-direction (`orientation` = 2)
+        calc_interface_flux_auxiliary!(nabla, elements.surface_flux_values,
+elements.left_neighbors[2, element],
+element, 2, u, mesh, equations, dg, cache)
     end
 
     return nothing
@@ -423,10 +434,58 @@ end
     return nothing
 end
 
+@inline function calc_interface_flux_auxiliary!(nabla, surface_flux_values, left_element, right_element,
+    orientation, u,
+    mesh::CurvedMesh{2}, equations,
+    dg::DG, cache)
+# This is slow for LSA, but for some reason faster for Euler (see #519)
+    if left_element <= 0 # left_element = 0 at boundaries
+        return nothing
+    end
+
+    @unpack contravariant_vectors = cache.elements
+    surface_flux = flux_central_auxiliary 
+
+    right_direction = 2 * orientation
+    left_direction = right_direction - 1
+
+    for i in eachnode(dg)
+        if orientation == 1
+            u_ll = get_node_vars(u, equations, dg, nnodes(dg), i, left_element)
+            u_rr = get_node_vars(u, equations, dg, 1,          i, right_element)
+
+# First contravariant vector Ja^1 as SVector
+            Ja11, Ja12 = get_contravariant_vector(1, contravariant_vectors, 1, i, right_element)
+# derivative in only one direction; y_η for u_x, -x_η for u_y, the other one is 0
+            if nabla == 1 normal_vector = SVector(Ja11, 0) else normal_vector = SVector(0, Ja12) end
+        else # orientation == 2
+            u_ll = get_node_vars(u, equations, dg, i, nnodes(dg), left_element)
+            u_rr = get_node_vars(u, equations, dg, i, 1,          right_element)
+
+# Second contravariant vector Ja^2 as SVector
+            Ja21, Ja22 = get_contravariant_vector(2, contravariant_vectors, i, 1, right_element)
+# derivative in only one direction; -y_ξ for u_x, x_ξ for u_y, the other one is 0
+            if nabla == 2 normal_vector = SVector(Ja22, 0) else normal_vector = normal_vector = SVector(0, Ja21) end
+        end
+
+        flux = surface_flux(u_ll, u_rr, normal_vector, equations)
+
+        for v in eachvariable(equations)
+            surface_flux_values[v, i, right_direction, left_element] = flux[v]
+            surface_flux_values[v, i, left_direction, right_element] = flux[v]
+        end
+    end
+
+    return nothing
+end
 
 # TODO: Taal dimension agnostic
 function calc_boundary_flux!(cache, u, t, boundary_condition::BoundaryConditionPeriodic,
                              mesh::CurvedMesh{2}, equations, dg::DG)
+    @assert isperiodic(mesh)
+end
+function calc_boundary_flux_auxiliary!(cache, u, t, boundary_condition::BoundaryConditionPeriodic,
+    mesh::CurvedMesh{2}, equations, dg::DG, nabla)
     @assert isperiodic(mesh)
 end
 
@@ -437,6 +496,13 @@ function calc_boundary_flux!(cache, u, t, boundary_condition,
                       (boundary_condition, boundary_condition,
                        boundary_condition, boundary_condition),
                       mesh, equations, dg)
+end
+function calc_boundary_flux_auxiliary!(cache, u, t, boundary_condition,
+    mesh::CurvedMesh{2}, equations, dg::DG, nabla)
+    calc_boundary_flux_auxiliary!(cache, u, t,
+(boundary_condition, boundary_condition,
+boundary_condition, boundary_condition),
+mesh, equations, dg, nabla)
 end
 
 
@@ -495,23 +561,112 @@ function calc_boundary_flux!(cache, u, t, boundary_conditions::Union{NamedTuple,
         end
     end
 end
+function calc_boundary_flux_auxiliary!(cache, u, t, boundary_conditions::Union{NamedTuple,Tuple},
+    mesh::CurvedMesh{2}, equations, dg::DG, nabla)
+    @unpack surface_flux = dg
+    if typeof(equations) == AuxiliaryEquation surface_flux = flux_central end
+    @unpack surface_flux_values = cache.elements
+    linear_indices = LinearIndices(size(mesh))
+
+    for cell_y in axes(mesh, 2)
+# Negative x-direction
+        direction = 1
+        element = linear_indices[begin, cell_y]
+
+        for j in eachnode(dg)
+            calc_boundary_flux_by_direction!(surface_flux_values, u, t, 1,
+              boundary_conditions[direction],
+              mesh, equations, dg, cache,
+              direction, (1, j), (j,), element, nabla)
+        end
+
+# Positive x-direction
+        direction = 2
+        element = linear_indices[end, cell_y]
+
+        for j in eachnode(dg)
+            calc_boundary_flux_by_direction!(surface_flux_values, u, t, 1,
+              boundary_conditions[direction],
+              mesh, equations, dg, cache,
+              direction, (nnodes(dg), j), (j,), element, nabla)
+        end
+    end
+
+    for cell_x in axes(mesh, 1)
+# Negative y-direction
+        direction = 3
+        element = linear_indices[cell_x, begin]
+
+        for i in eachnode(dg)
+            calc_boundary_flux_by_direction!(surface_flux_values, u, t, 2,
+              boundary_conditions[direction],
+              mesh, equations, dg, cache,
+              direction, (i, 1), (i,), element, nabla)
+        end
+
+# Positive y-direction
+        direction = 4
+        element = linear_indices[cell_x, end]
+
+        for i in eachnode(dg)
+            calc_boundary_flux_by_direction!(surface_flux_values, u, t, 2,
+              boundary_conditions[direction],
+              mesh, equations, dg, cache,
+              direction, (i, nnodes(dg)), (i,), element, nabla)
+        end
+    end
+end
 
 # BLZ modification neccessary for viscous equation, original function is in dg.jl
 @inline function calc_boundary_flux_by_direction!(surface_flux_values, u, t, orientation,
     boundary_condition,
     mesh::CurvedMesh, equations, dg::DG, cache,
     direction, node_indices, surface_node_indices, element)
-  @unpack node_coordinates, contravariant_vectors = cache.elements
-  @unpack surface_flux = dg
-  if typeof(equations) == AuxiliaryEquation  surface_flux = flux_central end # BLZ
+    @unpack node_coordinates, contravariant_vectors = cache.elements
+    @unpack surface_flux = dg
+    if typeof(equations) == AuxiliaryEquation  surface_flux = flux_central end # BLZ
 
-  u_inner = get_node_vars(u, equations, dg, node_indices..., element)
-  x = get_node_coords(node_coordinates, equations, dg, node_indices..., element)
+    u_inner = get_node_vars(u, equations, dg, node_indices..., element)
+    x = get_node_coords(node_coordinates, equations, dg, node_indices..., element)
   
   # Contravariant vector Ja^i is the normal vector
-  normal = get_contravariant_vector(orientation, contravariant_vectors, node_indices..., element)
+    normal = get_contravariant_vector(orientation, contravariant_vectors, node_indices..., element)
 
-  flux = boundary_condition(u_inner, normal, direction, x, t, surface_flux, equations)
+    flux = boundary_condition(u_inner, normal, direction, x, t, surface_flux, equations)
+  
+    for v in eachvariable(equations)
+        surface_flux_values[v, surface_node_indices..., direction, element] = flux[v]
+    end
+end
+@inline function calc_boundary_flux_by_direction!(surface_flux_values, u, t, orientation,
+    boundary_condition,
+    mesh::CurvedMesh, equations, dg::DG, cache,
+    direction, node_indices, surface_node_indices, element, nabla)
+    @unpack node_coordinates, contravariant_vectors = cache.elements
+    @unpack surface_flux = dg
+    if typeof(equations) == AuxiliaryEquation  surface_flux = flux_central end # BLZ
+
+    u_inner = get_node_vars(u, equations, dg, node_indices..., element)
+    x = get_node_coords(node_coordinates, equations, dg, node_indices..., element)
+  
+  # Contravariant vector Ja^i is the normal vector
+    normal = get_contravariant_vector(orientation, contravariant_vectors, node_indices..., element)
+
+  # derivative in only one direction, depending on orientation; 
+    # orientation = 2 : -y_ξ for u_x, x_ξ for u_y, the other one is 0
+    # orientation = 1 : y_η for u_x, -x_η for u_y, the other one is 0
+    if orientation == 2 
+        if nabla == 2 
+            normal_vector = SVector(normal[2], 0)
+        else normal_vector = normal_vector = SVector(0, normal[1])
+        end
+    else # orientation == 1
+        if nabla == 1 
+            normal_vector = SVector(normal[1], 0) 
+        else normal_vector = SVector(0, normal[2])
+        end
+    end
+    flux = boundary_condition(u_inner, normal_vector, direction, x, t, surface_flux, equations)
   
     for v in eachvariable(equations)
         surface_flux_values[v, surface_node_indices..., direction, element] = flux[v]

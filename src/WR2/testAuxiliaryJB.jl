@@ -2,9 +2,11 @@ using Trixi
 # Testumgebung, um die Korrektheit von q=∇u zu testen
 # Test mit Polynomen funktioniert -> Achte aber auf stetige RB
 # test mit Trigonometrischen Funktionen Funktioniert
-# Randwerte vom surface integral sind viel zu hoch, berechnen aber mit Mittelung den korrekten Wert
-# In der "normalen" semidiskretisierung/rhs! entstehen auch an den Rändern so hohe Werte
-# Krumme Gitter muss noch getestet und was für gemacht werden !
+# Krumme Gitter sehen jetzt auch gut aus.
+# ABER: welche für boundary conditions für die Hilfsgleichung? unstetige, zb periodisch führen zu
+#  "komischen"/großen Ableitungen wenn periodisch keinen "Sinn" macht, also unstetig ist
+# Fehler für Konstante Ableitung wird immer größer mit steigendem c, N... alles andere wird besser
+
 
 ######## notwendige funktionen die geladen werden müssen ##############################################
 # mapping O-mesh 
@@ -15,11 +17,18 @@ function mapping(xi_, eta_)
     y = 5 * (2 + ξ ) * sin(π * (η + 1))
     return SVector(x, y)
 end
-function mappingLin(xi_, eta_)
+function mapping1zu1(xi_, eta_)
   x = xi_ 
   y = eta_
   return SVector(x, y)
 end
+function mappingLin(xi_, eta_)
+    ξ = xi_ 
+    η = eta_
+    x = cos(pi* ξ) #5 * (2 + ξ ) + η #* cos(π * (η + 1))
+    y = sin(pi* η) #5 * (2 + η ) + ξ #* sin(π * (η + 1))
+    return SVector(x, y)
+  end
 function WR2_initial_condition_constant(x, t, equations::Trixi.AbstractEquations)
     rho = 1.0
     rho_v1 = 2
@@ -66,12 +75,12 @@ function wrap_array(u_ode::AbstractVector, mesh::Union{TreeMesh{2},CurvedMesh{2}
 end
 ###########################################################################################
 
-initial_condition = WR2_initial_condition_polynomial
-# initial_condition = WR2_initial_condition_trigonometric
+# initial_condition = WR2_initial_condition_polynomial
+initial_condition = WR2_initial_condition_trigonometric
 # initial_condition =   WR2_initial_condition_convergence_test
 
-N = 12
-c = 2
+N = 10
+c = 64
 cells_per_dimension = (c, c)
 coordinates_min = (0.0, 0.0)
 coordinates_max = (2.0,  2.0)
@@ -86,9 +95,9 @@ boundary_conditions = boundary_condition_constant
 eq = Trixi.AuxiliaryEquation()
 equations = CompressibleEulerEquations2D(1.4)
 
-# mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max, periodicity = false)
-# mesh = CurvedMesh(cells_per_dimension, mapping, periodicity=true)
-mesh = CurvedMesh(cells_per_dimension, mappingLin, periodicity=false) # for different boundary conditions
+# mesh = CurvedMesh(cells_per_dimension, mapping1zu1, periodicity = false)
+mesh = CurvedMesh(cells_per_dimension, mapping, periodicity = false)
+# mesh = CurvedMesh(cells_per_dimension, mappingLin, periodicity=true) # for different boundary conditions
 
 volume_integral = VolumeIntegralWeakForm()
 surface_flux = flux_lax_friedrichs
@@ -96,33 +105,23 @@ basis = LobattoLegendreBasis(N)
 dg = DGSEM(basis, surface_flux, volume_integral)
 
 solver = DGSEM(basis, surface_flux, volume_integral)
-semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver) #, boundary_conditions=boundary_conditions
+semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver, boundary_conditions=boundary_conditions) #, boundary_conditions=boundary_conditions
 ode = semidiscretize(semi, (0.0, 0.0))
 
 u = wrap_array(ode.u0, mesh, equations, solver, semi.cache)
 
-q = zeros(2, size(u, 1), size(u, 2), size(u, 3), size(u, 4))
+q1 = zeros(size(u, 1), size(u, 2), size(u, 3), size(u, 4))
+q2 = zeros(size(u, 1), size(u, 2), size(u, 3), size(u, 4))
 t = 0
 Trixi.calc_nabla_u!(
-    q, u, t, mesh, eq,
+    q1, q2, u, t, mesh, eq,
     boundary_conditions,
-    dg, semi.cache)
-
-dg = DGSEM(basis, flux_central, volume_integral)
-solver = DGSEM(basis, surface_flux, volume_integral)
-semi = SemidiscretizationHyperbolic(mesh, eq, initial_condition, solver) #, boundary_conditions=boundary_conditions
-ode = semidiscretize(semi, (0.0, 0.0))
-du = q[1,:,:,:,:]
-u_hm = Trixi.rhs!(du, u, t,
-    mesh, eq,
-    initial_condition, boundary_conditions,
-    # source_terms,
     dg, semi.cache)
 
 
     # ABleitung der initial condition convergence test
 
-function ABL_initial_condition_convergence_test(x, t, equations::Trixi.AuxiliaryEquation)
+function ABL_initial_condition_convergence_test(x, t, equations::Trixi.AbstractEquations)
 
     rho = pi * cos(pi * x[1])
     rho_v1 = pi * cos(pi * x[1])
@@ -131,32 +130,20 @@ function ABL_initial_condition_convergence_test(x, t, equations::Trixi.Auxiliary
     
     return SVector(rho, rho_v1, rho_v2, rho_e)
 end
-function ABL_initial_condition_convergence_test_basis(x, t)
-  c = 2
-  A = 0.1
-  L = 2
-  f = 1 / L
-  ω = 2 * pi * f # = pi
-  ini = A * ω * cos(ω * (x[1] + x[2] - t))
-  
-  rho = ini
-  rho_v1 = ini
-  rho_v2 = ini
-  # rho_e = 2 * ini * A * ω^2 * (-) * sin(ω * (x[1] + x[2] - t))
-  rho_e = 2 * ini * (A * sin(ω * (x[1] + x[2] - t) + c))
-
-  rho = pi * cos(pi * x[1])
-  rho_v1 = pi * cos(pi * x[1])
-  rho_v2 = pi * cos(pi * x[1])
-  rho_e = pi * cos(pi * x[1])
-  
-  return SVector(rho, rho_v1, rho_v2, rho_e)
+function ABL_initial_condition_polynomial(x, t, equations::Trixi.AbstractEquations)
+  return SVector(0, 1, x[1]*2, 3*x[1]^2)
 end
-# solver2 = DGSEM(basis, surface_flux, volume_integral)
-# initial_condition2 = ABL_initial_condition_convergence_test # 
-# semi2 = SemidiscretizationHyperbolic(mesh, equations, initial_condition2, solver2, boundary_conditions=boundary_conditions)
-# ode2 = semidiscretize(semi, (0.0, 0.0))
+function ABL_initial_condition_trigonometric(x, t, equations::Trixi.AbstractEquations)
+    # (sin(x[1]*π)/π, cos(x[1]*π)/π, sin(x[1]*π)/π+cos(x[2]*π)/π, sin(x[1]*π)/π+cos(x[1]*π)/π)
+    return SVector(cos(x[1]*π), -sin(x[1]*π), cos(x[1]*π), cos(x[1]*π)-sin(x[1]*π))
+end
+solver = DGSEM(basis, surface_flux, volume_integral)
+initial_condition = ABL_initial_condition_trigonometric # ABL_initial_condition_convergence_test # ABL_initial_condition_polynomial # 
+semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver, boundary_conditions=boundary_conditions)
+ode = semidiscretize(semi, (0.0, 0.0))
 
-# u_ABL = wrap_array(ode2.u0, mesh, equations, solver2, semi2.cache)
+u_ABL = wrap_array(ode.u0, mesh, equations, solver, semi.cache)
 
-# maximum(abs.(q[1,1,2:N,:,:]))
+for vgl = 1:4
+    println("conservative variable $vgl max error: ", maximum(abs.(u_ABL[vgl, :, :, :]-q1[vgl, :, :, :])))
+end
