@@ -4,7 +4,7 @@ using Trixi
 
 # Vgl. elixir_euler_free_stream_curved
 ###############################################################################
-CFL = 0.8           # 2
+CFL = 0.5           # 2
 tspan = (0.0, 0.2)
 
 # semidiscretization of the compressible Euler equations
