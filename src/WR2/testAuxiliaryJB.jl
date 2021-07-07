@@ -5,7 +5,7 @@ using Trixi
 # Krumme Gitter sehen jetzt auch gut aus.
 # ABER: welche für boundary conditions für die Hilfsgleichung? unstetige, zb periodisch führen zu
 #  "komischen"/großen Ableitungen wenn periodisch keinen "Sinn" macht, also unstetig ist
-# Fehler für Konstante Ableitung wird immer größer mit steigendem c, N... alles andere wird besser
+# Fehler für Konstante Ableitung = 0 wird immer größer mit steigendem c, N... alles andere wird besser
 
 
 ######## notwendige funktionen die geladen werden müssen ##############################################
@@ -80,7 +80,7 @@ initial_condition = WR2_initial_condition_trigonometric
 # initial_condition =   WR2_initial_condition_convergence_test
 
 N = 10
-c = 64
+c = 128
 cells_per_dimension = (c, c)
 coordinates_min = (0.0, 0.0)
 coordinates_max = (2.0,  2.0)
@@ -93,7 +93,7 @@ boundary_conditions = boundary_condition_constant
 #                        y_pos=boundary_condition_periodic)
 
 eq = Trixi.AuxiliaryEquation()
-equations = CompressibleEulerEquations2D(1.4)
+equations = CompressibleEulerEquations2D(1.4, viscous = true)
 
 # mesh = CurvedMesh(cells_per_dimension, mapping1zu1, periodicity = false)
 mesh = CurvedMesh(cells_per_dimension, mapping, periodicity = false)
@@ -105,13 +105,13 @@ basis = LobattoLegendreBasis(N)
 dg = DGSEM(basis, surface_flux, volume_integral)
 
 solver = DGSEM(basis, surface_flux, volume_integral)
-semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver, boundary_conditions=boundary_conditions) #, boundary_conditions=boundary_conditions
+semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver, boundary_conditions=boundary_conditions)
 ode = semidiscretize(semi, (0.0, 0.0))
 
 u = wrap_array(ode.u0, mesh, equations, solver, semi.cache)
 
-q1 = zeros(size(u, 1), size(u, 2), size(u, 3), size(u, 4))
-q2 = zeros(size(u, 1), size(u, 2), size(u, 3), size(u, 4))
+@unpack q1 = semi.cache
+@unpack q2 = semi.cache
 t = 0
 Trixi.calc_nabla_u!(
     q1, q2, u, t, mesh, eq,
@@ -134,7 +134,7 @@ function ABL_initial_condition_polynomial(x, t, equations::Trixi.AbstractEquatio
   return SVector(0, 1, x[1]*2, 3*x[1]^2)
 end
 function ABL_initial_condition_trigonometric(x, t, equations::Trixi.AbstractEquations)
-    # (sin(x[1]*π)/π, cos(x[1]*π)/π, sin(x[1]*π)/π+cos(x[2]*π)/π, sin(x[1]*π)/π+cos(x[1]*π)/π)
+    # braucht hohe Auflösung !
     return SVector(cos(x[1]*π), -sin(x[1]*π), cos(x[1]*π), cos(x[1]*π)-sin(x[1]*π))
 end
 solver = DGSEM(basis, surface_flux, volume_integral)

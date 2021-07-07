@@ -5,10 +5,10 @@ using Trixi
 #Laufen lassen mit sabotiertem VolumeIntegralWeakForm, um die semidiskretisierung auszugeben.
 ###############################################################################
 CFL = 0.8           # 2
-tspan = (0.0, 0.0)
+tspan = (0.0, 0.1)
 
 
-equations = CompressibleEulerEquations2D(1.4)
+equations = CompressibleEulerEquations2D(1.4, viscous = true)
 
 initial_condition = initial_condition_constant
 
@@ -17,17 +17,6 @@ surface_flux = flux_lax_friedrichs
 volume_integral = VolumeIntegralWeakForm()
 solver = DGSEM(polydeg=5, surface_flux=surface_flux, volume_integral = volume_integral )
 
-# mapping as described in the worksheet
-# function mapping(xi_, eta_)
-
-#     xi = xi_ 
-#     eta = eta_
-  
-#     x = xi + 0.15 * cos(0.5 * pi * xi) * cos((3/2) * pi * eta)
-#     y = eta + 0.15 * cos(2 * pi * xi) * cos(0.5 * pi * eta)
-
-#     return SVector(x, y)
-#   end
 
 cells_per_dimension = (16, 16)
 coordinates_min = (0.0, 0.0)
