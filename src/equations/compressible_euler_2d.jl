@@ -650,12 +650,12 @@ end
 
 
 # viscous flux for single point
-
-@inline function viscous_flux(u, q, orientation::Integer, equations::CompressibleEulerEquations2D)
+@inline function viscous_flux(u, q1, q2, orientation::Integer, equations::CompressibleEulerEquations2D)
 rho, rho_v1, rho_v2, rho_e = u
 v1 = rho_v1/rho
 v2 = rho_v2/rho
-rho_x, rho_v1_x, rho_v2_x, rho_e_x, rho_y, rho_v1_y, rho_v2_y, rho_e_y = q
+rho_x, rho_v1_x, rho_v2_x, rho_e_x = q1
+rho_y, rho_v1_y, rho_v2_y, rho_e_y = q2
 v1_x = (1/rho)*(rho_v1_x - rho_x* v1)
 v2_x = (1/rho)*(rho_v2_x - rho_x* v2)
 e_x = (1/rho)*(rho_e_x - rho_x* (rho_e/rho))
@@ -676,7 +676,14 @@ f4 = v1* (v2_x + v1_y) + v2* (2* v2_y + equations.lambda* (v1_x + v2_y)) + (equa
 end
 return SVector(f1, f2, f3, f4)
 end
-# to use the implemented code to calculate the auxiliary system q = ∇u with DGSEM
+# two point flux for euler and viscous terms
+@inline function euler_and_viscous_flux(u_node_ll, q1_node_ll, q2_node_ll, u_node_rr, q1_node_rr, q2_node_rr, orientation::Integer, equations::CompressibleEulerEquations2D, volume_flux)
+  euler_flux = volume_flux(u_node1, u_node2, orientation, equations)
+# we use the standard DGSEM for the visous terms -> use {F_viscous} in Flux Differencing form
+  viscous_flux_average = 0.5* (viscous_flux(u_node_ll, q1_node_ll, q2_node_ll, orientation, equations) + viscous_flux(u_node_rr, q1_node_rr, q2_node_rr, orientation, equations))
+  return SVector(euler_flux .+ viscous_flux_average)
+end
+# to use the implemented code to calculate the gradient q = ∇u with DGSEM
 function flux(u, orientation::Integer, equations::AuxiliaryEquation)
 return - u
 end

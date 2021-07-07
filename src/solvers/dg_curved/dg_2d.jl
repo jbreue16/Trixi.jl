@@ -6,13 +6,12 @@ function rhs!(du, u, t,
     @timeit_debug timer() "reset ∂u/∂t" du .= zero(eltype(du))
 
   # solve the auxilary system for viscous flows
-    if equations.viscous == true
-        error("viscous!") # BLZ TODO: add q1, q2 to cache, then q1, q2 .= zero(eltype(q))
+    if typeof(equations) == CompressibleEulerEquations2D{Float64} && equations.viscous
         #  q is an array with one dimension more than u: q = [∂u/∂x] [∂u/∂y]
-        # @unpack q1 = cache.q1
-        # @unpack q2 = cahce.q2
-        q1 = similar(du) # set to 0
-        q2 = similar(du)
+        @unpack q1 = cache
+        @unpack q2 = cache
+        q1 .= zero(eltype(q1))
+        q2 .= zero(eltype(q2))
         @timeit_debug timer() "auxiliary system" calc_nabla_u!(q1,
         q2, u, t, mesh, Trixi.AuxiliaryEquation(),
         boundary_conditions, # hier noch unstetige boundaries schwierig
@@ -255,6 +254,103 @@ function calc_volume_integral!(du, u,
     volume_integral::VolumeIntegralFluxDifferencing,
     dg::DGSEM, cache)
 
+    if typeof(equations) == CompressibleEulerEquations2D{Float64} && equations.viscous
+        calc_volume_integral_viscous!(du, u,
+        mesh::CurvedMesh{2},
+        nonconservative_terms::Val{false}, equations,
+        volume_integral::VolumeIntegralFluxDifferencing,
+        dg::DGSEM, cache)
+    else
+# separate and parallel computation for each element 
+        @threaded for element in eachelement(dg, cache)
+            @unpack contravariant_vectors = cache.elements
+            @unpack inverse_weights = dg.basis
+            @unpack derivative_matrix = dg.basis
+        # actually -S from Pseudo Strong Form!!
+            S = zeros(nnodes(dg), nnodes(dg))
+            S[  1,   1] += inverse_weights[1]
+            S[end, end] -= inverse_weights[end]
+
+# Volume Integral for one Element, loop over all nodes
+            for j in eachnode(dg), i in eachnode(dg)
+                u_node = get_node_vars(u, equations, dg, i, j, element)
+                flux1 = flux(u_node, 1, equations)
+                flux2 = flux(u_node, 2, equations)
+                
+# x direction
+                Ja11, Ja12 = get_contravariant_vector(1, contravariant_vectors, i, j, element)
+
+# two point flux of the same node outside the loop. And Pseudo Strong Part for boundary nodes
+                if i == 1 || i == nnodes(dg)
+                # Here we can also use the phys. flux.
+                    contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
+                    integral_contribution = (2 * derivative_matrix[i, i] + S[i, i]) *
+                                        contravariant_flux1            
+                    add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
+                else
+                    contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
+                    integral_contribution = 2 * derivative_matrix[i, i] * contravariant_flux1
+                    add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
+                end
+
+# two point flux symmetry: estimate the volume flux only one time
+                for ii in (i + 1):nnodes(dg)
+                # arihtmetic mean for two point volume flux metrics
+                    Ja11_, Ja12_ = get_contravariant_vector(1, contravariant_vectors, ii, j, element)
+                    u_node_ii = get_node_vars(u, equations, dg, ii, j, element)
+                    flux1 = volume_integral.volume_flux(u_node, u_node_ii, 1, equations)
+                    flux2 = volume_integral.volume_flux(u_node, u_node_ii, 2, equations)
+                    contravariant_flux1 = 0.5 * (Ja11 + Ja11_) * flux1 + 0.5 * (Ja12 + Ja12_) * flux2
+                    integral_contribution = 2 * derivative_matrix[i, ii] * contravariant_flux1
+                    add_to_node_vars!(du, integral_contribution, equations, dg, i,  j, element)
+                    integral_contribution = 2 * derivative_matrix[ii, i] * contravariant_flux1
+                    add_to_node_vars!(du, integral_contribution, equations, dg, ii, j, element)
+                end
+# y direction                
+                flux1 = flux(u_node, 1, equations)
+                flux2 = flux(u_node, 2, equations) 
+
+                Ja21, Ja22 = get_contravariant_vector(2, contravariant_vectors, i, j, element)
+
+# two point flux of the same node outside the loop. And Pseudo Strong Part for boundary nodes
+                if j == 1 || j == nnodes(dg)
+                # Here we can also use the phys. flux.
+                    contra_flux = Ja22 * flux2 + Ja21 * flux1    
+                    integral_contribution = (2 * derivative_matrix[j, j] + S[j, j]) *
+                                         contra_flux
+                    add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
+                else
+                    contravariant_flux2 = Ja22 * flux2 + Ja21 * flux1    
+                    integral_contribution = 2 * derivative_matrix[j, j] * contravariant_flux2
+                    add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
+                end
+# two point flux symmetry: estimate the volume flux only one time
+                for jj in (j + 1):nnodes(dg)
+                # arithmetic mean for two point volume flux metrics
+                    Ja21_, Ja22_ = get_contravariant_vector(2, contravariant_vectors, i, jj, element)
+                    u_node_jj = get_node_vars(u, equations, dg, i, jj, element)
+                    flux1 = volume_integral.volume_flux(u_node, u_node_jj, 1, equations)
+                    flux2 = volume_integral.volume_flux(u_node, u_node_jj, 2, equations)
+                    contravariant_flux2 = 0.5 * (Ja22 + Ja22_) * flux2 + 0.5 * (Ja21 + Ja21_) * flux1
+                    integral_contribution =  2 * derivative_matrix[j, jj] * contravariant_flux2
+                    add_to_node_vars!(du, integral_contribution, equations, dg, i, j,  element)
+                    integral_contribution =  2 * derivative_matrix[jj, j] * contravariant_flux2
+                    add_to_node_vars!(du, integral_contribution, equations, dg, i, jj, element)
+                end
+            end
+        end
+    end
+end
+
+function calc_volume_integral_viscous!(du, u,
+    mesh::CurvedMesh{2},
+    nonconservative_terms::Val{false}, equations,
+    volume_integral::VolumeIntegralFluxDifferencing,
+    dg::DGSEM, cache)
+
+    @unpack q1 = cache
+    @unpack q2 = cache
+
 # separate and parallel computation for each element 
     @threaded for element in eachelement(dg, cache)
         @unpack contravariant_vectors = cache.elements
@@ -268,25 +364,23 @@ function calc_volume_integral!(du, u,
 # Volume Integral for one Element, loop over all nodes
         for j in eachnode(dg), i in eachnode(dg)
             u_node = get_node_vars(u, equations, dg, i, j, element)
-            flux1 = flux(u_node, 1, equations)
-            flux2 = flux(u_node, 2, equations)
+            q1_node = get_node_vars(q1, equations, dg, i, j, element)
+            q2_node = get_node_vars(q2, equations, dg, i, j, element)
+
+            flux1 = flux(u_node, 1, equations) + viscous_flux(u_node, q1_node, q2_node, 1, equations)
+            flux2 = flux(u_node, 2, equations) + viscous_flux(u_node, q1_node, q2_node, 2, equations)
 
 # x direction
             Ja11, Ja12 = get_contravariant_vector(1, contravariant_vectors, i, j, element)
-            contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
 
 # two point flux of the same node outside the loop. And Pseudo Strong Part for boundary nodes
             if i == 1 || i == nnodes(dg)
-                # Here we can also use the phys. flux, but not a combination ?!
-                flux1 = volume_integral.volume_flux(u_node, u_node, 1, equations)
-                flux2 = volume_integral.volume_flux(u_node, u_node, 2, equations)
+                # Here we can also use the phys. flux.
                 contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
                 integral_contribution = (2 * derivative_matrix[i, i] + S[i, i]) *
                                         contravariant_flux1            
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
             else
-                flux1 = volume_integral.volume_flux(u_node, u_node, 1, equations)
-                flux2 = volume_integral.volume_flux(u_node, u_node, 2, equations)
                 contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
                 integral_contribution = 2 * derivative_matrix[i, i] * contravariant_flux1
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
@@ -297,33 +391,34 @@ function calc_volume_integral!(du, u,
                 # arihtmetic mean for two point volume flux metrics
                 Ja11_, Ja12_ = get_contravariant_vector(1, contravariant_vectors, ii, j, element)
                 u_node_ii = get_node_vars(u, equations, dg, ii, j, element)
-                flux1 = volume_integral.volume_flux(u_node, u_node_ii, 1, equations)
-                flux2 = volume_integral.volume_flux(u_node, u_node_ii, 2, equations)
+                q1_node_ii = get_node_vars(q1, equations, dg, ii, j, element)
+                q2_node_ii = get_node_vars(q2, equations, dg, ii, j, element)
+
+                flux1 = euler_and_viscous_flux(u_node, q1_node, q2_node, u_node_ii, q1_node_ii, q2_node_ii,
+                                                1, equations, volume_integral.volume_flux)
+                flux2 = euler_and_viscous_flux(u_node, q1_node, q2_node, u_node_ii, q1_node_ii, q2_node_ii,
+                                                2, equations, volume_integral.volume_flux)
                 contravariant_flux1 = 0.5 * (Ja11 + Ja11_) * flux1 + 0.5 * (Ja12 + Ja12_) * flux2
                 integral_contribution = 2 * derivative_matrix[i, ii] * contravariant_flux1
                 add_to_node_vars!(du, integral_contribution, equations, dg, i,  j, element)
                 integral_contribution = 2 * derivative_matrix[ii, i] * contravariant_flux1
                 add_to_node_vars!(du, integral_contribution, equations, dg, ii, j, element)
             end
-            flux1 = flux(u_node, 1, equations)
-# y direction
+# y direction                
+            flux1 = flux(u_node, 1, equations) + viscous_flux(u_node, q1_node, q2_node, 1, equations)
+            flux2 = flux(u_node, 2, equations) + viscous_flux(u_node, q1_node, q2_node, 2, equations)
 
             Ja21, Ja22 = get_contravariant_vector(2, contravariant_vectors, i, j, element)
-            contravariant_flux2 = Ja21 * flux1 + Ja22 * flux2
 
 # two point flux of the same node outside the loop. And Pseudo Strong Part for boundary nodes
             if j == 1 || j == nnodes(dg)
-                # Here we can also use the phys. flux, but not a combination ?!
-                flux1 = volume_integral.volume_flux(u_node, u_node, 1, equations)
-                flux2 = volume_integral.volume_flux(u_node, u_node, 2, equations)
-                contra_flux = Ja22 * flux2 + Ja21 * flux1
+                # Here we can also use the phys. flux.
+                contra_flux = Ja22 * flux2 + Ja21 * flux1    
                 integral_contribution = (2 * derivative_matrix[j, j] + S[j, j]) *
                                          contra_flux
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
             else
-                flux1 = volume_integral.volume_flux(u_node, u_node, 1, equations)
-                flux2 = volume_integral.volume_flux(u_node, u_node, 2, equations)
-                contravariant_flux2 = Ja22 * flux2 + Ja21 * flux1
+                contravariant_flux2 = Ja22 * flux2 + Ja21 * flux1    
                 integral_contribution = 2 * derivative_matrix[j, j] * contravariant_flux2
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
             end
@@ -332,8 +427,13 @@ function calc_volume_integral!(du, u,
                 # arithmetic mean for two point volume flux metrics
                 Ja21_, Ja22_ = get_contravariant_vector(2, contravariant_vectors, i, jj, element)
                 u_node_jj = get_node_vars(u, equations, dg, i, jj, element)
-                flux1 = volume_integral.volume_flux(u_node, u_node_jj, 1, equations)
-                flux2 = volume_integral.volume_flux(u_node, u_node_jj, 2, equations)
+                q1_node_jj = get_node_vars(q1, equations, dg, i, jj, element)
+                q2_node_jj = get_node_vars(q2, equations, dg, i, jj, element)
+
+                flux1 = euler_and_viscous_flux(u_node, q1_node, q2_node, u_node_jj, q1_node_jj, q2_node_jj,
+                                                    1, equations, volume_integral.volume_flux)
+                flux2 = euler_and_viscous_flux(u_node, q1_node, q2_node, u_node_jj, q1_node_jj, q2_node_jj,
+                                                    2, equations, volume_integral.volume_flux)
                 contravariant_flux2 = 0.5 * (Ja22 + Ja22_) * flux2 + 0.5 * (Ja21 + Ja21_) * flux1
                 integral_contribution =  2 * derivative_matrix[j, jj] * contravariant_flux2
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, j,  element)
@@ -343,7 +443,6 @@ function calc_volume_integral!(du, u,
         end
     end
 end
-
 
 function calc_interface_flux!(cache, u,
                               mesh::CurvedMesh{2},
@@ -404,6 +503,11 @@ end
     @unpack contravariant_vectors = cache.elements
     if typeof(equations) == AuxiliaryEquation # BLZ: to solve the auxiliary system
         surface_flux = flux_central_auxiliary 
+    else if typeof(equations) == CompressibleEulerEquations2D{Float64} && equations.viscous # BLZ: to add the central flux for viscous terms 
+        calc_interface_flux_viscous!(surface_flux_values, left_element, right_element,
+                                      orientation, u,
+                                      mesh, equations,
+                                      dg, cache)
     end 
     right_direction = 2 * orientation
     left_direction = right_direction - 1
@@ -432,6 +536,47 @@ end
     end
 
     return nothing
+end
+
+@inline function calc_interface_flux_viscous!(surface_flux_values, left_element, right_element,
+    orientation, u,
+    mesh::CurvedMesh{2}, equations,
+    dg::DG, cache)
+# This is slow for LSA, but for some reason faster for Euler (see #519)
+if left_element <= 0 # left_element = 0 at boundaries
+return nothing
+end
+
+@unpack surface_flux = dg
+@unpack contravariant_vectors = cache.elements
+
+right_direction = 2 * orientation
+left_direction = right_direction - 1
+
+for i in eachnode(dg)
+if orientation == 1
+u_ll = get_node_vars(u, equations, dg, nnodes(dg), i, left_element)
+u_rr = get_node_vars(u, equations, dg, 1,          i, right_element)
+
+# First contravariant vector Ja^1 as SVector
+normal_vector = get_contravariant_vector(1, contravariant_vectors, 1, i, right_element)
+else # orientation == 2
+u_ll = get_node_vars(u, equations, dg, i, nnodes(dg), left_element)
+u_rr = get_node_vars(u, equations, dg, i, 1,          right_element)
+
+# Second contravariant vector Ja^2 as SVector
+normal_vector = get_contravariant_vector(2, contravariant_vectors, i, 1, right_element)
+end
+
+flux = surface_flux_viscous(u_ll, u_rr, normal_vector, equations)
+
+for v in eachvariable(equations)
+surface_flux_values[v, i, right_direction, left_element] = flux[v]
+surface_flux_values[v, i, left_direction, right_element] = flux[v]
+end
+end
+
+return nothing
 end
 
 @inline function calc_interface_flux_auxiliary!(nabla, surface_flux_values, left_element, right_element,

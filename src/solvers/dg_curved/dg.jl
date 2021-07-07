@@ -5,14 +5,10 @@
 function create_cache(mesh::CurvedMesh, equations::AbstractEquations, dg::DG, ::Any, ::Type{uEltype}) where {uEltype<:Real}
   elements = init_elements(mesh, equations, dg.basis, uEltype)
 
-  if typeof(equations) == CompressibleEulerEquations2D{Float64}
-    if equations.viscous == true
+  if typeof(equations) == CompressibleEulerEquations2D{Float64} && equations.viscous == true
       q1 = zeros(nvariables(equations), length(dg.basis.nodes), length(dg.basis.nodes), size(mesh, 1)*size(mesh, 2))
       q2 = similar(q1)
       cache = (; elements, q1, q2)
-    else
-      cache = (; elements)
-    end
   else
     cache = (; elements)
   end
