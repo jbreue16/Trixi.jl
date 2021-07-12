@@ -31,17 +31,30 @@ function mappingLin(xi_, eta_)
   end
 function WR2_initial_condition_constant(x, t, equations::Trixi.AbstractEquations)
     rho = 1.0
-    rho_v1 = 2
-    rho_v2 = 0
-    rho_e = 1
+    rho_v1 = 0.1 
+    rho_v2 = -0.2 
+    rho_e = 10.0
     return SVector(rho, rho_v1, rho_v2, rho_e)
 end
 function WR2_initial_condition_polynomial(x, t, equations::Trixi.AbstractEquations)
-    return SVector(2, x[1]+x[2],x[1]^2, x[2]^2+x[1]^3)
+    return SVector(2, x[1] + x[2], x[1]^2, x[2]^2+x[1]^3)
 end
+function ABLx_initial_condition_polynomial(x, t, equations::Trixi.AbstractEquations)
+    return SVector(0, 1, x[1]*2, 3*x[1]^2) end
+function ABLy_initial_condition_polynomial(x, t, equations::Trixi.AbstractEquations)
+    return SVector(0, 1, 0, 2*x[2]) end 
+
+
 function WR2_initial_condition_trigonometric(x, t, equations::Trixi.AbstractEquations)
-    return SVector(sin(x[1]*π)/π, cos(x[1]*π)/π, sin(x[1]*π)/π+cos(x[2]*π)/π, sin(x[1]*π)/π+cos(x[1]*π)/π)
+    return SVector(sin(x[1]*π)/π, cos(x[1]*π)/π, sin(x[2]*π)/π + sin(x[1]*π)/π+cos(x[2]*π)/π, sin(x[2]*π)/π+cos(x[2]*π)/π + sin(x[1]*π)/π+cos(x[1]*π)/π)
 end
+    # braucht hohe Auflösung !
+function ABLx_initial_condition_trigonometric(x, t, equations::Trixi.AbstractEquations)
+    return SVector(cos(x[1]*π), -sin(x[1]*π), cos(x[1]*π), cos(x[1]*π)-sin(x[1]*π)) end
+function ABLy_initial_condition_trigonometric(x, t, equations::Trixi.AbstractEquations)
+    return SVector(0, 0, cos(x[2]*π), cos(x[2]*π)-sin(x[2]*π)) end
+
+
 function WR2_initial_condition_convergence_test(x, t, equations::Trixi.AbstractEquations)
 
     rho = sin(pi * x[1])
@@ -49,6 +62,15 @@ function WR2_initial_condition_convergence_test(x, t, equations::Trixi.AbstractE
     rho_v2 = sin(pi * x[1])
     rho_e = sin(pi * x[1])
   
+    return SVector(rho, rho_v1, rho_v2, rho_e)
+end
+function ABLx_initial_condition_convergence_test(x, t, equations::Trixi.AbstractEquations)
+
+    rho = pi * cos(pi * x[1])
+    rho_v1 = pi * cos(pi * x[1])
+    rho_v2 = pi * cos(pi * x[1])
+    rho_e = pi * cos(pi * x[1])
+    
     return SVector(rho, rho_v1, rho_v2, rho_e)
 end
 function boundary_condition_constant( u_inner, orientation, direction, x, t,
@@ -73,14 +95,18 @@ function wrap_array(u_ode::AbstractVector, mesh::Union{TreeMesh{2},CurvedMesh{2}
     unsafe_wrap(Array{eltype(u_ode),ndims(mesh) + 2}, pointer(u_ode),
                 (nvariables(equations), nnodes(dg), nnodes(dg), nelements(dg, cache)))
 end
+
 ###########################################################################################
 
-# initial_condition = WR2_initial_condition_polynomial
-initial_condition = WR2_initial_condition_trigonometric
+# initial_condition = WR2_initial_condition_constant
+initial_condition = WR2_initial_condition_polynomial
+# initial_condition = WR2_initial_condition_trigonometric
 # initial_condition =   WR2_initial_condition_convergence_test
-
-N = 10
-c = 128
+# Zum Vergleich mit exakter Ableitung !
+initial_condition2 = ABLx_initial_condition_convergence_test # ABLx_initial_condition_polynomial # ABLx_initial_condition_trigonometric # 
+initial_condition3 = ABLy_initial_condition_polynomial # ABLy_initial_condition_trigonometric # ABLy_initial_condition_convergence_test # 
+N = 4
+c = 16
 cells_per_dimension = (c, c)
 coordinates_min = (0.0, 0.0)
 coordinates_max = (2.0,  2.0)
@@ -95,8 +121,8 @@ boundary_conditions = boundary_condition_constant
 eq = Trixi.AuxiliaryEquation()
 equations = CompressibleEulerEquations2D(1.4, viscous = true)
 
-# mesh = CurvedMesh(cells_per_dimension, mapping1zu1, periodicity = false)
-mesh = CurvedMesh(cells_per_dimension, mapping, periodicity = false)
+mesh = CurvedMesh(cells_per_dimension, mapping1zu1, periodicity = false)
+# mesh = CurvedMesh(cells_per_dimension, mapping, periodicity = false)
 # mesh = CurvedMesh(cells_per_dimension, mappingLin, periodicity=true) # for different boundary conditions
 
 volume_integral = VolumeIntegralWeakForm()
@@ -118,32 +144,19 @@ Trixi.calc_nabla_u!(
     boundary_conditions,
     dg, semi.cache)
 
+# Zum vergleich mit exakter Ableitung !
+solver = DGSEM(basis, surface_flux, volume_integral) 
+semi_x = SemidiscretizationHyperbolic(mesh, equations, initial_condition2, solver, boundary_conditions=boundary_conditions)
+ode_x = semidiscretize(semi_x, (0.0, 0.0))
+semi_y = SemidiscretizationHyperbolic(mesh, equations, initial_condition3, solver, boundary_conditions=boundary_conditions)
+ode_y = semidiscretize(semi_y, (0.0, 0.0))
 
-    # ABleitung der initial condition convergence test
-
-function ABL_initial_condition_convergence_test(x, t, equations::Trixi.AbstractEquations)
-
-    rho = pi * cos(pi * x[1])
-    rho_v1 = pi * cos(pi * x[1])
-    rho_v2 = pi * cos(pi * x[1])
-    rho_e = pi * cos(pi * x[1])
-    
-    return SVector(rho, rho_v1, rho_v2, rho_e)
-end
-function ABL_initial_condition_polynomial(x, t, equations::Trixi.AbstractEquations)
-  return SVector(0, 1, x[1]*2, 3*x[1]^2)
-end
-function ABL_initial_condition_trigonometric(x, t, equations::Trixi.AbstractEquations)
-    # braucht hohe Auflösung !
-    return SVector(cos(x[1]*π), -sin(x[1]*π), cos(x[1]*π), cos(x[1]*π)-sin(x[1]*π))
-end
-solver = DGSEM(basis, surface_flux, volume_integral)
-initial_condition = ABL_initial_condition_trigonometric # ABL_initial_condition_convergence_test # ABL_initial_condition_polynomial # 
-semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver, boundary_conditions=boundary_conditions)
-ode = semidiscretize(semi, (0.0, 0.0))
-
-u_ABL = wrap_array(ode.u0, mesh, equations, solver, semi.cache)
+u_ABLx = wrap_array(ode_x.u0, mesh, equations, solver, semi.cache)
+u_ABLy = wrap_array(ode_y.u0, mesh, equations, solver, semi.cache)
 
 for vgl = 1:4
-    println("conservative variable $vgl max error: ", maximum(abs.(u_ABL[vgl, :, :, :]-q1[vgl, :, :, :])))
+    println("q1 cons.var. $vgl max error: ", maximum(abs.(u_ABLx[vgl, :, :, :]-q1[vgl, :, :, :])))
+end
+for vgl = 1:4
+    println("q2 cons.var. $vgl max error: ", maximum(abs.(u_ABLy[vgl, :, :, :]-q2[vgl, :, :, :])))
 end
