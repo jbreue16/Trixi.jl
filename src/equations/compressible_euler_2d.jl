@@ -14,10 +14,11 @@ struct CompressibleEulerEquations2D{RealT <: Real} <: AbstractCompressibleEulerE
     viscous::Bool # BLZ: for viscous flux dispatch
     Pr::RealT # BLZ: Prandtl number 
     lambda::RealT # BLZ: per default -2/3 (stokes hypothesis)
+    mu::RealT # BLZ: Dynamic vicosity coefficient
 end
 
-function CompressibleEulerEquations2D(RealT::Real; viscous=false, Pr=0.72, lambda=-2 / 3)
-    return CompressibleEulerEquations2D(RealT, viscous, Pr, lambda)
+function CompressibleEulerEquations2D(RealT::Real; viscous=false, mu=0.001, Pr=0.72, lambda=-2 / 3)
+    return CompressibleEulerEquations2D(RealT, viscous, mu, Pr, lambda)
 end
 # Auxiliary Equation to solve the auxiliary system q = ∇u for viscous flows
 struct AuxiliaryEquation <: AbstractCompressibleEulerEquations{2,4} end
@@ -674,7 +675,8 @@ f2 = v2_x + v1_y
 f3 = 2 * v2_x + equations.lambda * (v1_x + v2_y)
 f4 = v1 * (v2_x + v1_y) + v2 * (2 * v2_y + equations.lambda * (v1_x + v2_y)) + (equations.gamma / equations.Pr) * e_y
 end
-return SVector(f1, f2, f3, f4)
+
+  return SVector(equation.mu * f1, equation.mu * f2, equation.mu * f3, equation.mu * f4)
 end
 
 @inline function viscous_flux(u, q1, q2, normal::AbstractVector, equations::CompressibleEulerEquations2D)
@@ -724,8 +726,8 @@ end
     f2 = f2_n1 * normal[1] + f2_n2 * normal[2]
     f3 = f3_n1 * normal[1] + f3_n2 * normal[2]
     f4 =  f4_n1 * normal[1] + f4_n2 * normal[2]
-
-  return SVector(f1, f2, f3, f4)
+    
+  return SVector( equation.mu * f1, equation.mu * f2, equation.mu * f3, equation.mu * f4)
 end
   
 # two point flux for euler and viscous terms

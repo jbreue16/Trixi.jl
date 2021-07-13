@@ -1,21 +1,25 @@
 using OrdinaryDiffEq
 using Trixi
+using Plots
 
 
 # Vgl. elixir_euler_free_stream_curved
 ###############################################################################
-CFL = 0.5           # 2
-tspan = (0.0, 0.2)
+CFL = 0.1           # 2
+tspan = (0.0, 2)
+N = 1
+c = 16
+mu = 0.001
 
 # semidiscretization of the compressible Euler equations
 
-equations = CompressibleEulerEquations2D(1.4, viscous = true)
+equations = CompressibleEulerEquations2D(1.4, viscous = true, mu)
 
 initial_condition = initial_condition_constant
 
 
 surface_flux = FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive))
-basis = LobattoLegendreBasis(3)
+basis = LobattoLegendreBasis(N)
 volume_flux  = flux_chandrashekar 
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
 solver = DGSEM(basis, surface_flux, volume_integral)
@@ -44,7 +48,7 @@ function mapping1zu1(xi_, eta_)
     return SVector(x, y)
 end
 
-cells_per_dimension = (4, 4)
+cells_per_dimension = (c, c)
 
 # mesh = CurvedMesh(cells_per_dimension, mapping)#(-1.0, -1.0), (1.0, 1.0))#, mapping)
 mesh = CurvedMesh(cells_per_dimension, (-1.0, -1.0), (1.0, 1.0))
@@ -79,8 +83,8 @@ stepsize_callback = StepsizeCallback(cfl=CFL)
 
 callbacks = CallbackSet(summary_callback,
                         analysis_callback,
-                        alive_callback,
-                        save_solution,
+                        #alive_callback,
+                        #save_solution,
                         stepsize_callback)
 
 ###############################################################################

@@ -16,6 +16,9 @@ function rhs!(du, u, t,
         q2, u, t, mesh, Trixi.AuxiliaryEquation(),
         boundary_conditions, # hier noch unstetige boundaries schwierig
         dg, cache)
+        #println(maximum(abs.(q1)))
+        # q1 .= zero(eltype(q1))
+        # q2 .= zero(eltype(q2))
     end
 
   # Calculate volume integral
@@ -546,7 +549,7 @@ end
     orientation, u,
     mesh::CurvedMesh{2}, equations,
     dg::DG, cache)
-# This is slow for LSA, but for some reason faster for Euler (see #519)
+    # This is slow for LSA, but for some reason faster for Euler (see #519)
     if left_element <= 0 # left_element = 0 at boundaries
         return nothing
     end
@@ -568,7 +571,7 @@ end
             q2_ll = get_node_vars(q2, equations, dg, nnodes(dg), i, left_element)
             q2_rr = get_node_vars(q2, equations, dg, 1,          i, right_element)
 
-# First contravariant vector Ja^1 as SVector
+    # First contravariant vector Ja^1 as SVector
             normal_vector = get_contravariant_vector(1, contravariant_vectors, 1, i, right_element)
         else # orientation == 2
             u_ll = get_node_vars(u, equations, dg, i, nnodes(dg), left_element)
@@ -578,7 +581,7 @@ end
             q2_ll = get_node_vars(q2, equations, dg, i, nnodes(dg), left_element)
             q2_rr = get_node_vars(q2, equations, dg, i, 1,          right_element)
 
-# Second contravariant vector Ja^2 as SVector
+    # Second contravariant vector Ja^2 as SVector
             normal_vector = get_contravariant_vector(2, contravariant_vectors, i, 1, right_element)
         end
 
@@ -659,9 +662,9 @@ end
 function calc_boundary_flux_auxiliary!(cache, u, t, boundary_condition,
     mesh::CurvedMesh{2}, equations, dg::DG, nabla)
     calc_boundary_flux_auxiliary!(cache, u, t,
-(boundary_condition, boundary_condition,
-boundary_condition, boundary_condition),
-mesh, equations, dg, nabla)
+    (boundary_condition, boundary_condition,
+    boundary_condition, boundary_condition),
+    mesh, equations, dg, nabla)
 end
 
 
@@ -799,6 +802,7 @@ end
         surface_flux_values[v, surface_node_indices..., direction, element] = flux[v]
     end
 end
+
 @inline function calc_boundary_flux_by_direction!(surface_flux_values, u, t, orientation,
     boundary_condition,
     mesh::CurvedMesh, equations, dg::DG, cache,
@@ -819,7 +823,7 @@ end
     if orientation == 2 
         if nabla == 2 
             normal_vector = SVector(normal[2], 0)
-        else normal_vector = normal_vector = SVector(0, normal[1])
+        else normal_vector = SVector(0, normal[1])
         end
     else # orientation == 1
         if nabla == 1 
@@ -843,6 +847,7 @@ function apply_jacobian!(du,
     @threaded for element in eachelement(dg, cache)
         for j in eachnode(dg), i in eachnode(dg)
             factor = -inverse_jacobian[i, j, element]
+            # factor = inverse_jacobian[i, j, element]
 
             for v in eachvariable(equations)
                 du[v, i, j, element] *= factor
