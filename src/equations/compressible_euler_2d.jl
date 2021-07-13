@@ -12,9 +12,9 @@ The compressible Euler equations for an ideal gas in two space dimensions.
 struct CompressibleEulerEquations2D{RealT <: Real} <: AbstractCompressibleEulerEquations{2,4}
     gamma::RealT
     viscous::Bool # BLZ: for viscous flux dispatch
+    mu::RealT # BLZ: Dynamic vicosity coefficient
     Pr::RealT # BLZ: Prandtl number 
     lambda::RealT # BLZ: per default -2/3 (stokes hypothesis)
-    mu::RealT # BLZ: Dynamic vicosity coefficient
 end
 
 function CompressibleEulerEquations2D(RealT::Real; viscous=false, mu=0.001, Pr=0.72, lambda=-2 / 3)
@@ -676,7 +676,7 @@ f3 = 2 * v2_x + equations.lambda * (v1_x + v2_y)
 f4 = v1 * (v2_x + v1_y) + v2 * (2 * v2_y + equations.lambda * (v1_x + v2_y)) + (equations.gamma / equations.Pr) * e_y
 end
 
-  return SVector(equation.mu * f1, equation.mu * f2, equation.mu * f3, equation.mu * f4)
+  return SVector(equations.mu * f1, equations.mu * f2, equations.mu * f3, equations.mu * f4)
 end
 
 @inline function viscous_flux(u, q1, q2, normal::AbstractVector, equations::CompressibleEulerEquations2D)
@@ -727,7 +727,7 @@ end
     f3 = f3_n1 * normal[1] + f3_n2 * normal[2]
     f4 =  f4_n1 * normal[1] + f4_n2 * normal[2]
     
-  return SVector( equation.mu * f1, equation.mu * f2, equation.mu * f3, equation.mu * f4)
+  return SVector( equations.mu * f1, equations.mu * f2, equations.mu * f3, equations.mu * f4)
 end
   
 # two point flux for euler and viscous terms
