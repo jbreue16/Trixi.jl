@@ -13,7 +13,7 @@ mu = 0.001
 
 # semidiscretization of the compressible Euler equations
 
-equations = CompressibleEulerEquations2D(1.4, viscous = true, mu)
+equations = CompressibleEulerEquations2D(1.4, viscous = true, mu = mu)
 
 initial_condition = initial_condition_constant
 
