@@ -3,9 +3,9 @@ using OrdinaryDiffEq
 using Trixi
 using Plots
 
-v1 = 0.38
-tspan = (0.0, 1)
-tspan_max = 0.3
+v1 = 0.38 # MACH: v1 = 0.38 -> 10.16%, v1 = 0.1 -> 2.67? %
+tspan = (0.0, 0.01) # ≈ 20 für stabilen Zustand
+
 function WR2_initial_condition_constant(x, t, equations::CompressibleEulerEquations2D)
     rho = 1.0
     rho_v1 = v1
@@ -41,8 +41,10 @@ function mapping(xi_, eta_)
     ξ = xi_ 
     η = eta_
 
-    x = 2 * (2 + ξ ) * cos(π * (η + 1))
-    y = 2 * (2 + ξ ) * sin(π * (η + 1))
+    size = 2    # gebietsgröße
+    d = 2       # ≈ durchmesser
+    x = size * (d + ξ ) * cos(π * (η + 1))
+    y = size * (d + ξ ) * sin(π * (η + 1))
 
     return SVector(x, y)
 end
