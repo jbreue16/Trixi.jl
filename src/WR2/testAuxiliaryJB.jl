@@ -3,7 +3,7 @@ using Trixi
 # Test mit Polynomen funktioniert -> Achte aber auf stetige RB
 # test mit Trigonometrischen Funktionen Funktioniert
 # Krumme Gitter sehen jetzt auch gut aus.
-# ABER: welche für boundary conditions für die Hilfsgleichung? unstetige, zb periodisch führen zu
+# ABER: welche boundary conditions für die Hilfsgleichung? unstetige, zb periodisch führen zu
 #  "komischen"/großen Ableitungen wenn periodisch keinen "Sinn" macht, also unstetig ist
 # Fehler für Konstante Ableitung = 0 wird immer größer mit steigendem c, N... alles andere wird besser
 
@@ -22,11 +22,18 @@ function mapping1zu1(xi_, eta_)
   y = eta_
   return SVector(x, y)
 end
-function mappingLin(xi_, eta_)
+function mappingTri(xi_, eta_)
     ξ = xi_ 
     η = eta_
-    x = cos(pi* ξ) #5 * (2 + ξ ) + η #* cos(π * (η + 1))
-    y = sin(pi* η) #5 * (2 + η ) + ξ #* sin(π * (η + 1))
+    x = cos(pi* ξ)
+    y = η
+    return SVector(x, y)
+  end
+  function mappingLin(xi_, eta_)
+    ξ = xi_ 
+    η = eta_
+    x = 1.2* ξ
+    y = η
     return SVector(x, y)
   end
 function WR2_initial_condition_constant(x, t, equations::Trixi.AbstractEquations)
@@ -46,7 +53,7 @@ function ABLy_initial_condition_polynomial(x, t, equations::Trixi.AbstractEquati
 
 
 function WR2_initial_condition_trigonometric(x, t, equations::Trixi.AbstractEquations)
-    return SVector(sin(x[1]*π)/π, cos(x[1]*π)/π, sin(x[2]*π)/π + sin(x[1]*π)/π+cos(x[2]*π)/π, sin(x[2]*π)/π+cos(x[2]*π)/π + sin(x[1]*π)/π+cos(x[1]*π)/π)
+    return SVector(sin(x[1]*π)/π, cos(x[1]*π)/π, sin(x[2]*π)/π + sin(x[1]*π)/π, sin(x[2]*π)/π + cos(x[2]*π)/π + sin(x[1]*π)/π+cos(x[1]*π)/π)
 end
     # braucht hohe Auflösung !
 function ABLx_initial_condition_trigonometric(x, t, equations::Trixi.AbstractEquations)
@@ -56,21 +63,24 @@ function ABLy_initial_condition_trigonometric(x, t, equations::Trixi.AbstractEqu
 
 
 function WR2_initial_condition_convergence_test(x, t, equations::Trixi.AbstractEquations)
-
     rho = sin(pi * x[1])
     rho_v1 = sin(pi * x[1])
     rho_v2 = sin(pi * x[1])
     rho_e = sin(pi * x[1])
-  
     return SVector(rho, rho_v1, rho_v2, rho_e)
 end
 function ABLx_initial_condition_convergence_test(x, t, equations::Trixi.AbstractEquations)
-
     rho = pi * cos(pi * x[1])
     rho_v1 = pi * cos(pi * x[1])
     rho_v2 = pi * cos(pi * x[1])
     rho_e = pi * cos(pi * x[1])
-    
+    return SVector(rho, rho_v1, rho_v2, rho_e)
+end
+function ABLy_initial_condition_convergence_test(x, t, equations::Trixi.AbstractEquations)
+    rho = 0
+    rho_v1 = 0
+    rho_v2 = 0
+    rho_e = 0
     return SVector(rho, rho_v1, rho_v2, rho_e)
 end
 function boundary_condition_constant( u_inner, orientation, direction, x, t,
@@ -85,7 +95,6 @@ function boundary_condition_constant( u_inner, orientation, direction, x, t,
     else # direction == 4 # u_boundary is "left" of boundary, u_inner is "right" of boundary
         flux = surface_flux_function(u_boundary, u_inner, orientation, equations)
     end
-
     return flux
   end
 function wrap_array(u_ode::AbstractVector, mesh::Union{TreeMesh{2},CurvedMesh{2},UnstructuredQuadMesh}, equations, dg::DG, cache)
@@ -103,8 +112,8 @@ initial_condition = WR2_initial_condition_polynomial
 # initial_condition = WR2_initial_condition_trigonometric
 # initial_condition =   WR2_initial_condition_convergence_test
 # Zum Vergleich mit exakter Ableitung !
-initial_condition2 = ABLx_initial_condition_convergence_test # ABLx_initial_condition_polynomial # ABLx_initial_condition_trigonometric # 
-initial_condition3 = ABLy_initial_condition_polynomial # ABLy_initial_condition_trigonometric # ABLy_initial_condition_convergence_test # 
+initial_condition2 = ABLx_initial_condition_polynomial # ABLx_initial_condition_trigonometric #  ABLx_initial_condition_convergence_test #  
+initial_condition3 = ABLy_initial_condition_polynomial # ABLy_initial_condition_trigonometric #   ABLy_initial_condition_convergence_test # 
 N = 4
 c = 16
 cells_per_dimension = (c, c)
@@ -121,9 +130,9 @@ boundary_conditions = boundary_condition_constant
 eq = Trixi.AuxiliaryEquation()
 equations = CompressibleEulerEquations2D(1.4, viscous = true)
 
-mesh = CurvedMesh(cells_per_dimension, mapping1zu1, periodicity = false)
-# mesh = CurvedMesh(cells_per_dimension, mapping, periodicity = false)
-# mesh = CurvedMesh(cells_per_dimension, mappingLin, periodicity=true) # for different boundary conditions
+# mesh = CurvedMesh(cells_per_dimension, mapping1zu1, periodicity = false)
+mesh = CurvedMesh(cells_per_dimension, mapping, periodicity = false)
+# mesh = CurvedMesh(cells_per_dimension, mappingLin, periodicity = true) #mappingTri
 
 volume_integral = VolumeIntegralWeakForm()
 surface_flux = flux_lax_friedrichs
