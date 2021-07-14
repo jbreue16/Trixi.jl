@@ -649,7 +649,7 @@ end
 function calc_boundary_flux_auxiliary!(cache, u, t, boundary_condition::BoundaryConditionPeriodic,
     mesh::CurvedMesh{2}, equations, dg::DG, nabla)
     @assert isperiodic(mesh)
-    error("please initialise periodic boundaries with 4-tuple
+    error("please initialize periodic boundaries with 4-tuple
     (boundary_condition, boundary_condition, boundary_condition, boundary_condition)!")
 end
 
@@ -736,7 +736,7 @@ function calc_boundary_flux_auxiliary!(cache, u, t, boundary_conditions::Union{N
     # Negative x-direction
         direction = 1
         element = linear_indices[begin, cell_y]
-        # periodic boundaries need to be seperately computed for the auxiliary equation
+        # periodic boundaries computed as interface fluxes for the auxiliary equation
         if boundary_conditions[direction] == boundary_condition_periodic 
             orientation = 1 # x axis
             left_element = element # in negative x direction the current element is the left element
@@ -757,7 +757,7 @@ function calc_boundary_flux_auxiliary!(cache, u, t, boundary_conditions::Union{N
     # Positive x-direction
         direction = 2
         element = linear_indices[end, cell_y]
-        # periodic boundaries need to be seperately computed for the auxiliary equation
+        # periodic boundaries computed as interface fluxes for the auxiliary equation
         if boundary_conditions[direction] == boundary_condition_periodic 
             orientation = 1 # x axis
             right_element = element # in positive x direction the current element is the right element
@@ -780,7 +780,7 @@ function calc_boundary_flux_auxiliary!(cache, u, t, boundary_conditions::Union{N
     # Negative y-direction
         direction = 3
         element = linear_indices[cell_x, begin]
-
+        # periodic boundaries computed as interface fluxes for the auxiliary equation
         if boundary_conditions[direction] == boundary_condition_periodic 
             orientation = 2 # y axis
             right_element = element # in negative y direction the current element is the right element
@@ -807,6 +807,7 @@ function calc_boundary_flux_auxiliary!(cache, u, t, boundary_conditions::Union{N
     # Positive y-direction
         direction = 4
         element = linear_indices[cell_x, end]
+        # periodic boundaries computed as interface fluxes for the auxiliary equation
         if boundary_conditions[direction] == boundary_condition_periodic 
             orientation = 2 # y axis
             left_element = element # in positive y direction the current element is the left element
@@ -908,64 +909,3 @@ function apply_jacobian!(du,
 
     return nothing
 end
-
-# peridic boundaries special treatment for viscous?
-# @inline function calc_boundary_flux_by_direction!(surface_flux_values, u, t, orientation,
-#     boundary_condition,
-#     mesh::CurvedMesh, equations, dg::DG, cache,
-#     direction, node_indices, surface_node_indices, element, nabla)
-#     @unpack node_coordinates, contravariant_vectors = cache.elements
-#     @unpack surface_flux = dg
-#     @unpack elements = cache
-
-#     if typeof(equations) == AuxiliaryEquation  surface_flux = flux_central end # BLZ
-
-#     u_inner = get_node_vars(u, equations, dg, node_indices..., element)
-#     x = get_node_coords(node_coordinates, equations, dg, node_indices..., element)
-  
-#   # Contravariant vector Ja^i is the normal vector
-#     normal = get_contravariant_vector(orientation, contravariant_vectors, node_indices..., element)
-
-#   # derivative in only one direction, depending on orientation; 
-#     # orientation = 2 : -y_ξ for u_x, x_ξ for u_y, the other one is 0 to get only one flux (f OR g)
-#     # orientation = 1 : y_η for u_x, -x_η for u_y, the other one is 0 to get only one flux (f OR g)
-#     if orientation == 2 
-#         if nabla == 2 
-#             normal_vector = SVector(normal[2], 0)
-#         else normal_vector = SVector(0, normal[1])
-#         end
-#     else # orientation == 1
-#         if nabla == 1 
-#             normal_vector = SVector(normal[1], 0)
-#         else normal_vector = SVector(0, normal[2])
-#         end
-#     end
-    
-#     # if typeof(boundary_condition) == Trixi.BoundaryConditionPeriodic
-#     #     # get neighbour node indices
-#     #     i, j = node_indices
-#     #     if direction in (2, 4) # u_inner is "left" of boundary, u_boundary is "right" of boundary
-#     #         j = nnodes(dg)
-#     #     else # orientation in (1, 3)
-#     #         i = nnodes(dg)
-#     #     end
-
-#     #     # println(node_indices)
-#     #     # println((i, j))
-#     #     println(elements.left_neighbors[orientation, element])
-#     #     # println(u_inner)
-#     #     # println(u_boundary)
-#     #     u_boundary = get_node_vars(u, equations, dg, (i, j)..., elements.left_neighbors[orientation, element])
-#     #     # Calculate boundary flux
-#     #     if direction in (2, 4) # u_inner is "left" of boundary, u_boundary is "right" of boundary
-#     #         flux = surface_flux(u_inner, u_boundary, normal_vector, equations)
-#     #     else # direction == 4 # u_boundary is "left" of boundary, u_inner is "right" of boundary
-#     #         flux = surface_flux(u_boundary, u_inner, normal_vector, equations)
-#     #     end
-#     # else 
-#         flux = boundary_condition(u_inner, normal_vector, direction, x, t, surface_flux, equations)
-#     # end
-#     for v in eachvariable(equations)
-#         surface_flux_values[v, surface_node_indices..., direction, element] = flux[v]
-#     end
-# end
