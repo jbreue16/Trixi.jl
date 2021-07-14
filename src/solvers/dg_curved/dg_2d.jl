@@ -649,6 +649,8 @@ end
 function calc_boundary_flux_auxiliary!(cache, u, t, boundary_condition::BoundaryConditionPeriodic,
     mesh::CurvedMesh{2}, equations, dg::DG, nabla)
     @assert isperiodic(mesh)
+    error("please initialize periodic boundaries with 4-tuple
+    (boundary_condition, boundary_condition, boundary_condition, boundary_condition)!")
 end
 
 
@@ -671,7 +673,6 @@ end
 function calc_boundary_flux!(cache, u, t, boundary_conditions::Union{NamedTuple,Tuple},
                              mesh::CurvedMesh{2}, equations, dg::DG)
     @unpack surface_flux = dg
-    if typeof(equations) == AuxiliaryEquation surface_flux = flux_central end
     @unpack surface_flux_values = cache.elements
     linear_indices = LinearIndices(size(mesh))
 
@@ -726,9 +727,8 @@ end
 
 # BLZ
 function calc_boundary_flux_auxiliary!(cache, u, t, boundary_conditions::Union{NamedTuple,Tuple},
-    mesh::CurvedMesh{2}, equations, dg::DG, nabla)
-    @unpack surface_flux = dg
-    if typeof(equations) == AuxiliaryEquation surface_flux = flux_central end
+    mesh::CurvedMesh{2}, equations::AuxiliaryEquation, dg::DG, nabla)
+
     @unpack surface_flux_values = cache.elements
     linear_indices = LinearIndices(size(mesh))
 
@@ -736,6 +736,16 @@ function calc_boundary_flux_auxiliary!(cache, u, t, boundary_conditions::Union{N
     # Negative x-direction
         direction = 1
         element = linear_indices[begin, cell_y]
+        # periodic boundaries computed as interface fluxes for the auxiliary equation
+        if boundary_conditions[direction] == boundary_condition_periodic 
+            orientation = 1 # x axis
+            left_element = element # in negative x direction the current element is the left element
+            right_element = linear_indices[end, cell_y]
+            calc_interface_flux_auxiliary!(nabla, surface_flux_values, left_element, right_element,
+                                            orientation, u,
+                                            mesh, equations,
+                                            dg, cache)
+        end
 
         for j in eachnode(dg)
             calc_boundary_flux_by_direction!(surface_flux_values, u, t, 1,
@@ -747,6 +757,16 @@ function calc_boundary_flux_auxiliary!(cache, u, t, boundary_conditions::Union{N
     # Positive x-direction
         direction = 2
         element = linear_indices[end, cell_y]
+        # periodic boundaries computed as interface fluxes for the auxiliary equation
+        if boundary_conditions[direction] == boundary_condition_periodic 
+            orientation = 1 # x axis
+            right_element = element # in positive x direction the current element is the right element
+            left_element = linear_indices[begin, cell_y]
+            calc_interface_flux_auxiliary!(nabla, surface_flux_values, left_element, right_element,
+                                            orientation, u,
+                                            mesh, equations,
+                                            dg, cache)
+        end
 
         for j in eachnode(dg)
             calc_boundary_flux_by_direction!(surface_flux_values, u, t, 1,
@@ -760,6 +780,22 @@ function calc_boundary_flux_auxiliary!(cache, u, t, boundary_conditions::Union{N
     # Negative y-direction
         direction = 3
         element = linear_indices[cell_x, begin]
+        # periodic boundaries computed as interface fluxes for the auxiliary equation
+        if boundary_conditions[direction] == boundary_condition_periodic 
+            orientation = 2 # y axis
+            right_element = element # in negative y direction the current element is the right element
+            left_element = linear_indices[cell_x, end]
+            calc_interface_flux_auxiliary!(nabla, surface_flux_values, left_element, right_element,
+                                            orientation, u,
+                                            mesh, equations,
+                                            dg, cache)
+            # u_inner = get_node_vars(u, equations, dg, node_indices..., element)
+            # flux = surface_flux(u_inner, uboundary, normal, equations)
+            # for v in eachvariable(equations)
+            #     surface_flux_values[v, i, right_direction, left_element] = flux[v]
+            #     surface_flux_values[v, i, left_direction, right_element] = flux[v]
+            # end
+        end
 
         for i in eachnode(dg)
             calc_boundary_flux_by_direction!(surface_flux_values, u, t, 2,
@@ -771,6 +807,16 @@ function calc_boundary_flux_auxiliary!(cache, u, t, boundary_conditions::Union{N
     # Positive y-direction
         direction = 4
         element = linear_indices[cell_x, end]
+        # periodic boundaries computed as interface fluxes for the auxiliary equation
+        if boundary_conditions[direction] == boundary_condition_periodic 
+            orientation = 2 # y axis
+            left_element = element # in positive y direction the current element is the left element
+            right_element = linear_indices[cell_x, begin]
+            calc_interface_flux_auxiliary!(nabla, surface_flux_values, left_element, right_element,
+                                            orientation, u,
+                                            mesh, equations,
+                                            dg, cache)
+        end
 
         for i in eachnode(dg)
             calc_boundary_flux_by_direction!(surface_flux_values, u, t, 2,
@@ -788,16 +834,21 @@ end
     direction, node_indices, surface_node_indices, element)
     @unpack node_coordinates, contravariant_vectors = cache.elements
     @unpack surface_flux = dg
-    if typeof(equations) == AuxiliaryEquation  surface_flux = flux_central end # BLZ
 
     u_inner = get_node_vars(u, equations, dg, node_indices..., element)
     x = get_node_coords(node_coordinates, equations, dg, node_indices..., element)
   
   # Contravariant vector Ja^i is the normal vector
     normal = get_contravariant_vector(orientation, contravariant_vectors, node_indices..., element)
-
-    flux = boundary_condition(u_inner, normal, direction, x, t, surface_flux, equations)
-  
+    if equations.viscous # boundaries including gradient needed for viscous equation
+    @unpack q1 = cache
+    @unpack q2 = cache
+    q1_inner = get_node_vars(q1, equations, dg, node_indices..., element)
+    q2_inner = get_node_vars(q2, equations, dg, node_indices..., element)
+    flux = boundary_condition(u_inner, q1_inner, q2_inner, normal, direction, x, t, surface_flux, equations)
+    else 
+        flux = boundary_condition(u_inner, normal, direction, x, t, surface_flux, equations)
+    end
     for v in eachvariable(equations)
         surface_flux_values[v, surface_node_indices..., direction, element] = flux[v]
     end
@@ -805,11 +856,11 @@ end
 
 @inline function calc_boundary_flux_by_direction!(surface_flux_values, u, t, orientation,
     boundary_condition,
-    mesh::CurvedMesh, equations, dg::DG, cache,
+    mesh::CurvedMesh, equations::AuxiliaryEquation, dg::DG, cache,
     direction, node_indices, surface_node_indices, element, nabla)
     @unpack node_coordinates, contravariant_vectors = cache.elements
-    @unpack surface_flux = dg
-    if typeof(equations) == AuxiliaryEquation  surface_flux = flux_central end # BLZ
+    # central flux for gradient equation
+    surface_flux = flux_central
 
     u_inner = get_node_vars(u, equations, dg, node_indices..., element)
     x = get_node_coords(node_coordinates, equations, dg, node_indices..., element)
@@ -817,7 +868,7 @@ end
   # Contravariant vector Ja^i is the normal vector
     normal = get_contravariant_vector(orientation, contravariant_vectors, node_indices..., element)
 
-  # derivative in only one direction, depending on orientation; 
+  # BLZ: derivative in only one direction, depending on orientation; 
     # orientation = 2 : -y_ξ for u_x, x_ξ for u_y, the other one is 0
     # orientation = 1 : y_η for u_x, -x_η for u_y, the other one is 0
     if orientation == 2 
@@ -831,7 +882,8 @@ end
         else normal_vector = SVector(0, normal[2])
         end
     end
-    flux = boundary_condition(u_inner, normal_vector, direction, x, t, surface_flux, equations)
+    # just set q1, q2 = 0 as placeholder
+    flux = boundary_condition(u_inner, 0, 0, normal_vector, direction, x, t, surface_flux, equations)
   
     for v in eachvariable(equations)
         surface_flux_values[v, surface_node_indices..., direction, element] = flux[v]
