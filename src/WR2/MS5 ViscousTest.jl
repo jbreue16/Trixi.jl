@@ -5,9 +5,9 @@ using Plots
 
 # Vgl. elixir_euler_free_stream_curved
 ###############################################################################
-CFL = 0.1           # 2
-tspan = (0.0, 2)
-N = 1
+CFL = 0.01          # 2
+tspan = (0.0, 0.2)
+N = 3
 c = 16
 mu = 0.001
 
@@ -29,13 +29,24 @@ solver = DGSEM(basis, surface_flux, volume_integral)
 # solver = DGSEM(polydeg=3, surface_flux=surface_flux, volume_integral = volume_integral )
 
 # mapping as described in the worksheet
-function mapping(xi_, eta_)
+function mappingCos(xi_, eta_)
 
     xi = xi_ 
     eta = eta_
   
     x = xi + 0.15 * cos(0.5 * pi * xi) * cos((3/2) * pi * eta)
     y = eta + 0.15 * cos(2 * pi * xi) * cos(0.5 * pi * eta)
+
+    return SVector(x, y)
+end
+
+function mappingOmesh(xi_, eta_)
+
+    ξ = xi_ 
+    η = eta_
+
+    x = 2 * (2 + ξ ) * cos(π * (η + 1))
+    y = 2 * (2 + ξ ) * sin(π * (η + 1))
 
     return SVector(x, y)
 end
@@ -50,7 +61,7 @@ end
 
 cells_per_dimension = (c, c)
 
-# mesh = CurvedMesh(cells_per_dimension, mapping)#(-1.0, -1.0), (1.0, 1.0))#, mapping)
+# mesh = CurvedMesh(cells_per_dimension, mappingCos, periodicity = true)
 mesh = CurvedMesh(cells_per_dimension, (-1.0, -1.0), (1.0, 1.0))
 
 

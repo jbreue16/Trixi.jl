@@ -134,6 +134,88 @@ end
 
 
 """
+initial_condition_convergence_test_viscous(x, t, equations::CompressibleEulerEquations2D)
+
+A smooth initial condition used for convergence tests for Navier-Stokes-equations in combination with
+[`boundary_condition_convergence_test_viscous`](@ref) and [`source_terms_convergence_test_viscous`](@ref).
+    -> Gassner, Loercher, Munz, A discountinuos Galerkin scheme based on a space-time expansion II. ..., p. 19-20
+"""
+function initial_condition_convergence_test_viscous(x, t, equations::CompressibleEulerEquations2D)
+    # μ = equations.mu
+    # Pr = equations.Pr
+    # κ = equations.gamma
+    k = 2 # k = c_p * μ / Pr
+    c = 4 
+    ω = 0.5
+    ini = sin(k * (x[1] + x[2]) - ω * t) + c
+
+    rho = ini
+    rho_v1 = ini
+    rho_v2 = ini
+    rho_e = ini^2
+
+    return SVector(rho, rho_v1, rho_v2, rho_e)
+end
+
+"""
+source_terms_convergence_test_viscous(u, x, t, equations::CompressibleEulerEquations2D)
+
+Source terms used for convergence tests for Navier-Stokes-equations in combination with
+[`initial_condition_convergence_test_viscous`](@ref) and [`boundary_condition_convergence_test_viscous`](@ref).
+    -> Gassner, Loercher, Munz, A discountinuos Galerkin scheme based on a space-time expansion II. ..., p. 19-20
+"""
+@inline function source_terms_convergence_test_viscous(u, x, t, equations::CompressibleEulerEquations2D)
+    # Same settings as in `initial_condition`
+    μ = equations.mu
+    Pr = equations.Pr
+    κ = equations.gamma
+    k = 2 # k = c_p * μ / Pr
+    c = 4 
+    ω = 0.5
+
+    x, y = x
+    co = cos(k * (x + y) - ω * t)
+    si = sin(2 * k * (x + y) - 2 * ω * t)
+    tmp1 = 2 * k - ω
+    tmp2 = - ω + 2 * k * c * κ - k * κ + 3 * ω - 2 * k * x
+    tmp3 = k * κ - k
+    tmp4 = 4 * k * c * κ + 2 * k - 2 * k * κ - 2 * ω * c
+    tmp5 = 2 * k * κ - ω
+
+    du1 = co * tmp1
+    du2 = co * tmp2 + si * tmp3
+    du3 = co * tmp2 + si * tmp3
+    du4 = co * tmp4 + si * tmp5 + sin(k * (x + y) - ω * t) * (2 * k^2 * μ * κ / Pr)
+
+    return SVector(du1, du2, du3, du4)
+end
+
+"""
+boundary_condition_convergence_test_viscous(u_inner, orientation, direction, x, t,
+                                            surface_flux_function,
+                                            equations::CompressibleEulerEquations2D)
+
+Boundary conditions used for convergence tests for Navier-Stokes-equations in combination with
+[`initial_condition_convergence_test_viscous`](@ref) and [`source_terms_convergence_test_viscous`](@ref).
+-> Gassner, Loercher, Munz, A discountinuos Galerkin scheme based on a space-time expansion II. ..., p. 19-20
+"""
+function boundary_condition_convergence_test_viscous(u_inner, orientation, direction, x, t,
+                                          surface_flux_function,
+                                          equations::CompressibleEulerEquations2D)
+    u_boundary = initial_condition_convergence_test_viscous(x, t, equations)
+
+    # Calculate boundary flux
+    if direction in (2, 4) # u_inner is "left" of boundary, u_boundary is "right" of boundary
+        flux = surface_flux_function(u_inner, u_boundary, orientation, equations)
+    else # u_boundary is "left" of boundary, u_inner is "right" of boundary
+        flux = surface_flux_function(u_boundary, u_inner, orientation, equations)
+    end
+
+    return flux
+end
+
+
+"""
 initial_condition_density_pulse(x, t, equations::CompressibleEulerEquations2D)
 
 A Gaussian pulse in the density with constant velocity and pressure; reduces the
@@ -688,7 +770,7 @@ end
   v1_x = (1 / rho) * (rho_v1_x - rho_x * v1)
   v2_x = (1 / rho) * (rho_v2_x - rho_x * v2)
   e_x = (1 / rho) * (rho_e_x - rho_x * (rho_e / rho))
-  v1_y = (1 / rho) * (rho_v1_y - rho_y * v1)
+    v1_y = (1 / rho) * (rho_v1_y - rho_y * v1)
   v2_y = (1 / rho) * (rho_v2_y - rho_y * v2)
   e_y = (1 / rho) * (rho_e_y - rho_y * (rho_e / rho))
 # rotations in normal direction
@@ -715,11 +797,11 @@ end
 
   f2_n1 = 2 * v1_x + equations.lambda * (v1_x + v2_y) 
     f3_n1 = v2_x + v1_y
-    f4_n1 = v1 * (2* v1_x + equations.lambda * (v1_x + v2_y)) + v2 * (v2_x + v1_y) + (equations.gamma/equations.Pr) * e_x
+    f4_n1 = v1 * (2 * v1_x + equations.lambda * (v1_x + v2_y)) + v2 * (v2_x + v1_y) + (equations.gamma / equations.Pr) * e_x
 
     f2_n2 = v2_x + v1_y
     f3_n2 = 2 * v2_x + equations.lambda * (v1_x + v2_y)
-    f4_n2 = v1 * (v2_x + v1_y) + v2* (2* v2_y + equations.lambda * (v1_x + v2_y)) + (equations.gamma/equations.Pr) * e_y
+    f4_n2 = v1 * (v2_x + v1_y) + v2 * (2 * v2_y + equations.lambda * (v1_x + v2_y)) + (equations.gamma / equations.Pr) * e_y
 
 
     f1 = 0
@@ -727,7 +809,7 @@ end
     f3 = f3_n1 * normal[1] + f3_n2 * normal[2]
     f4 =  f4_n1 * normal[1] + f4_n2 * normal[2]
     
-  return SVector( equations.mu * f1, equations.mu * f2, equations.mu * f3, equations.mu * f4)
+  return SVector(equations.mu * f1, equations.mu * f2, equations.mu * f3, equations.mu * f4)
 end
   
 # two point flux for euler and viscous terms
