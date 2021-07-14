@@ -83,7 +83,7 @@ function ABLy_initial_condition_convergence_test(x, t, equations::Trixi.Abstract
     rho_e = 0
     return SVector(rho, rho_v1, rho_v2, rho_e)
 end
-function boundary_condition_constant( u_inner, orientation, direction, x, t,
+function boundary_condition_constant( u_inner, q1_inner, q2_inner, orientation, direction, x, t,
     surface_flux_function,
     equations::Trixi.AbstractEquations)
     # Far Field Conditions
@@ -108,30 +108,30 @@ end
 ###########################################################################################
 
 # initial_condition = WR2_initial_condition_constant
-initial_condition = WR2_initial_condition_polynomial
-# initial_condition = WR2_initial_condition_trigonometric
+# initial_condition = WR2_initial_condition_polynomial
+initial_condition = WR2_initial_condition_trigonometric
 # initial_condition =   WR2_initial_condition_convergence_test
 # Zum Vergleich mit exakter Ableitung !
-initial_condition2 = ABLx_initial_condition_polynomial # ABLx_initial_condition_trigonometric #  ABLx_initial_condition_convergence_test #  
-initial_condition3 = ABLy_initial_condition_polynomial # ABLy_initial_condition_trigonometric #   ABLy_initial_condition_convergence_test # 
+initial_condition2 = ABLx_initial_condition_trigonometric # ABLx_initial_condition_polynomial # ABLx_initial_condition_convergence_test #   
+initial_condition3 = ABLy_initial_condition_trigonometric # ABLy_initial_condition_polynomial # ABLy_initial_condition_convergence_test # 
 N = 4
-c = 16
+c = 64
 cells_per_dimension = (c, c)
 coordinates_min = (0.0, 0.0)
 coordinates_max = (2.0,  2.0)
 
-boundary_conditions = boundary_condition_constant
+# boundary_conditions = boundary_condition_constant
 # boundary_conditions = boundary_condition_periodic
-# boundary_conditions = (x_neg=boundary_condition_x,
-#                        x_pos=boundary_condition_x,
-#                        y_neg=boundary_condition_periodic,
-#                        y_pos=boundary_condition_periodic)
+boundary_conditions = (x_neg=boundary_condition_constant,
+                       x_pos=boundary_condition_constant,
+                       y_neg=boundary_condition_periodic,
+                       y_pos=boundary_condition_periodic)
 
 eq = Trixi.AuxiliaryEquation()
 equations = CompressibleEulerEquations2D(1.4, viscous = true)
 
 # mesh = CurvedMesh(cells_per_dimension, mapping1zu1, periodicity = false)
-mesh = CurvedMesh(cells_per_dimension, mapping, periodicity = false)
+mesh = CurvedMesh(cells_per_dimension, mapping, periodicity = (false, true))
 # mesh = CurvedMesh(cells_per_dimension, mappingLin, periodicity = true) #mappingTri
 
 volume_integral = VolumeIntegralWeakForm()
