@@ -247,7 +247,7 @@ Konvergenztabellen für das standard DGSEM.
     \begin{tabular}{|r|r|r|}
     \hline\hline
     \textbf{Nq} & \textbf{Error} & \textbf{EOC} \\\hline
-    2 & $\num{6.42854e-02}$ & $\num{}$ \\
+    2 & $\num{6.42854e-02}$ &  \\
     4 & $\num{1.32856e-02}$ & $\num{2.27}$ \\
     8 & $\num{8.78254e-04}$ & $\num{3.92}$ \\
     16 & $\num{4.49618e-05}$ & $\num{4.29}$ \\
@@ -261,7 +261,7 @@ Konvergenztabellen für das standard DGSEM.
     \begin{tabular}{|r|r|r|}
     \hline\hline
     \textbf{Nq} & \textbf{Error} & \textbf{EOC} \\\hline
-    2 & $\num{2.38883e-02}$ & $\num{}$ \\
+    2 & $\num{2.38883e-02}$ &  \\
     4 & $\num{1.14360e-03}$ & $\num{4.38}$ \\
     8 & $\num{4.22035e-05}$ & $\num{4.76}$ \\
     16 & $\num{2.07943e-06}$ & $\num{4.34}$ \\
@@ -298,7 +298,7 @@ Konvergenztabellen für das Split-Form DGSEM mit Chandrashekar Fluss.
     \begin{tabular}{|r|r|r|}
     \hline\hline
     \textbf{Nq} & \textbf{Error} & \textbf{EOC} \\\hline
-    2 & $\num{6.87889e-02}$ & $\num{}$ \\
+    2 & $\num{6.87889e-02}$ & \\
     4 & $\num{1.42021e-02}$ & $\num{2.28}$ \\
     8 & $\num{8.05405e-04}$ & $\num{4.14}$ \\
     16 & $\num{3.93625e-05}$ & $\num{4.35}$ \\
@@ -312,7 +312,7 @@ Konvergenztabellen für das Split-Form DGSEM mit Chandrashekar Fluss.
     \begin{tabular}{|r|r|r|}
     \hline\hline
     \textbf{Nq} & \textbf{Error} & \textbf{EOC} \\\hline
-    2 & $\num{2.29650e-02}$ & $\num{}$ \\
+    2 & $\num{2.29650e-02}$ &  \\
     4 & $\num{8.08062e-04}$ & $\num{4.83}$ \\
     8 & $\num{3.71735e-05}$ & $\num{4.44}$ \\
     16 & $\num{1.76278e-06}$ & $\num{4.40}$ \\
@@ -322,64 +322,48 @@ Konvergenztabellen für das Split-Form DGSEM mit Chandrashekar Fluss.
    \caption{N = $4$}
   }
 \end{table}
-Zur Entropie Konservierung und Entropie Stabilität/Dissipativität: \\
+\textbf{Zur Entropie:} Wir untersuchen auf Entropie-Erhaltung bzw. -Stabilität/Dissipativität. \\
 Die Chandrashekar Split-Form DGSEM ist Entropie stabil/dissipativ und nicht Entropie erhaltend. 
-Zum Test dieser Eigenschaft wurde die Anfangsbedingung einer schwachen Druckwelle gewählt und die Veränderung der Entropie von $t=0$ bis $t=2$ auf einem Gebiet mit periodischen Randbedingungen betrachtet.\\
-Änderung der Entropie mit Chandrashekar split Form DGSEM und Lax-Friedrichs Oberflächenfluss, $Nq = 16$: 
+Zum Test dieser Eigenschaft wurde die Anfangsbedingung einer schwachen Druckwelle gewählt und die Veränderung der Entropie von $t=0$ bis $t=10$ auf einem Gebiet mit periodischen Randbedingungen und $CFL=0.8$ betrachtet.\\
+Änderung der Entropie mit Chandrashekar split Form DGSEM und Chendrashekar Oberflächenfluss mit Dissipation, $N=3, 4$ und $Nq = 16$: 
 \begin{table}[H]
 \centering
 \begin{tabular}{|r|r|r|}
     \hline\hline
      & \textbf{N=4} & \textbf{N=3} \\\hline
-    \textbf{$t=0$} & $\num{-5.71025015e-05}$ & $\num{-5.92064714e-05}$ \\
-    \textbf{$t=2$} &  $\num{-3.21918983e-04}$ & $\num{-3.56391403e-04}$ \\
-    \textbf{change} & $\num{-6.39293138e-05}$ & $\num{-7.03772643e-05}$ \\\hline\hline
+    $\sum \frac{\partial S}{\partial U} U_t$ & $\num{-2.52724653e-05}$ & $\num{-6.2016e-04}$ \\
+    $\left( \sum S \right) |_{t_0}^{T}$ & $\num{-3.04933925e-05}$ & $\num{-6.1016e-04}$ \\\hline\hline
 \end{tabular}
-\end{table}
-Das Verfahren ist also Entropie dissipativ mit dem dissipativen Oberflächen Fluss. (Andres hatte hier empfohlen, auch mal den zentralen fluss zu verwenden um zu prüfen ob die DIssipation daher kommt, der zentrale ist nämlich nicht dissipativ. allerdings schmiert das programm mit diesem oberflächenfluss ab.. deswegen testen wir die eoc initial bedningung statt der Druckwelle um Konservativität mit dem zentralen FLuss zu zeigen) \\
-Änderung der Entropie mit Chandrashekar split Form DGSEM und Zentralem Oberflächenfluss, $Nq = 16$: 
-\begin{table}[H]
-\centering
-\begin{tabular}{|r|r|r|}
-    \hline\hline
-     & \textbf{N=4} & \textbf{N=3} \\\hline
-    \textbf{$t=0$} & $\num{5.96901414e+00}$ & $\num{5.96901414e+00}$ \\
-    \textbf{$t=2$} &  $\num{5.96901409e+00}$ & $\num{5.96901401e+00}$ \\
-    \textbf{change} & $\num{2.29319463e-11}$ & $\num{1.12220590e-09}$ \\\hline\hline
-\end{tabular}
+\caption{Änderung der Entropie mit Chandrashekar split Form DGSEM und dissipativem Chandrashekar Oberflächenfluss}
 \end{table}
 
-\textbf{3.} What can you tell about the stability of the standard DGSEM for the Euler equations in comparison to the split form scheme we are discussing here? \\
-Derselbe Test im selben setting aber mit standard DGSEM und Lax-Friedrichs:
+Das Verfahren ist also Entropie-dissipativ mit dem dissipativen Oberflächen Fluss. \\ 
+Jetzt testen wir auf Entropie-Erhaltung indem wir den dissipativen Teil aus dem Oberflächenfluss streichen.
+Änderung der Entropie mit Chandrashekar split Form DGSEM und Chandrashekar Oberflächenfluss ohne Dissipation, $Nq = 16$: 
 \begin{table}[H]
 \centering
 \begin{tabular}{|r|r|r|}
     \hline\hline
      & \textbf{N=4} & \textbf{N=3} \\\hline
-    \textbf{$t=0$} & $\num{-5.71025015e-05}$ & $\num{-5.92064714e-05}$ \\
-    \textbf{$t=2$} &  $\num{-3.28236824e-04}$ & $\num{-3.64796886e-04}$ \\
-    \textbf{change} & $\num{-6.28522402e-05}$ & $\num{-6.83109410e-05}$ \\\hline\hline
+    $\sum \frac{\partial S}{\partial U} U_t$ & $\num{2.43521972e-21}$ & $\num{-5.04397532e-18}$ \\
+    $\left( \sum S \right) |_{t_0}^{T}$ & $\num{-4.1294e-05}$ & $\num{-3.8701e-05}$ \\\hline\hline
 \end{tabular}
+\caption{Änderung der Entropie mit Chandrashekar split Form DGSEM und Chandrashekar Oberflächenfluss ohne Dissipation}
 \end{table}
-standard DGSEM und Zentraler FLuss
-\begin{table}[H]
-\centering
-\begin{tabular}{|r|r|r|}
-    \hline\hline
-     & \textbf{N=4} & \textbf{N=3} \\\hline
-    \textbf{$t=0$} & $\num{5.96901414e+00}$ & $\num{5.96901414e+00}$ \\
-    \textbf{$t=2$} &  $\num{5.96901408e+00}$ & $\num{5.96901358e+00}$ \\
-    \textbf{change} & $\num{-5.41344278e-08}$ & $\num{-1.19035038e-06}$ \\\hline\hline
-\end{tabular}
-\end{table}
-Abhängig vom Oberflächenfluss ist die Chandrashekar Split Form Entropie erhaltend, wohingegen das standard DGSEM immer Entropie dissipativ ist.\\
 
-\textbf{4.} Explain what freestream preservation means and why it might be im-portant for this project. \\
-Freistromerhaltung bedeutet, dass ein numerisches Verfahren eine konstante Lösung erhält und keine künstlichen Artefakte bildet, welche sich hochschaukeln können im Laufe der Rechnung. In diesem Projekt ist die Freistromerhaltung wichtig, da dies grundsätzlich eine wichtige Eigenschaft guter Verfahren ist. Außerdem spielt hier die Freistromerhaltung insbesondere für die Approximation der Geometrie in einem krummlinigen Gitter eine Rolle: Die Freistromerhaltung ist dann gewährleistet, wenn die Randkurven mit Polynomen vom selben Polynomgrad approximiert werden wie die für das DGSEM gewählte LGL Basis. (Vgl Skript WR$1$) 
+Ohne Dissipation im Oberflächenfluss ist das Chendrashekar DGSEM also Entropie-erhaltend.\\
+\textbf{3.} What can you tell about the stability of the standard DGSEM for the Euler equations in comparison to the split form scheme we are discussing here? \\ \ \\
+\textbf{To analyse the stability}, we compare the methods with different surface fluxes on the setting of the weak blast wave, $N=3$ and $Nq = 16$. We prescribe a terminal time of $t=20$ and adjust the CFL number to derive the maximal CFL possible until the methods fail. \\
+The Standard-DGSEM always fails when the central flux or Chandrashekar surface flux without dissipation is used. For the Lax-Friedrichs and the Chandrashekar surface flux with dissipation the method can supply a CFL of $1.6$ to run until $t=20$. To reach $t=100$, the method's maximal CFL is $1.55$\\
+Compared to that the Chandrashekar split-form-DGSEM outperforms the Standard-DGSEM. Combined with a Chandrashekar surface flux without dissipation, the method supplies a CFL of $2.37$ to run until $t=20$. Adding dissipation to the Chandrashekar surface flux results in a maximal CFL of $1.6$ to reach $t=20$. To reach $t=100$, the method's maximal CFL is still $2.37$. \\
+One can conduct that the Chandrashekar DGSEM is superior in terms of stability.
+\\ \ \\
+\textbf{4.} Explain what freestream preservation means and why it might be important for this project. \\
+Freistromerhaltung bedeutet, dass ein numerisches Verfahren eine konstante Lösung innerhalb der Maschinengenauigkeit erhält und keine künstlichen Artefakte bildet, welche sich im Laufe der Rechnung hochschaukeln können. Die Freistromerhaltung ist grundsätzlich eine wichtige Eigenschaft guter Verfahren. In diesem Projekt spielt die Freistromerhaltung insbesondere für die Approximation der Geometrie durch ein krummliniges Gitter eine Rolle: Die Freistromerhaltung ist dann gewährleistet, wenn die Randkurven mit Polynomen von mindestens demselben Polynomgrad approximiert werden, wie der für das DGSEM gewählte Polynomgrad der LGL Basis. (Vgl Skript WR$1$ \cite{Gassner_WR1})
 
 \newpage
 \section{Meilenstein 3}
-We now want to approximate the solution of the Euler equations on curvi-linear geometries, which is especially important when our simulation domainhas curved boundaries. In the last semester, we learned how to constructcurvilinear mappings. For this part of the project, we will use curvilinear mappings to extend our standard and split-form DGSEM code to curvilinearstructured meshes. The first step is to make our code able to approximate the solution of the Euler equations on a curvilinear block with periodic boundary conditions. The curvilinear block will be obtained from a Cartesian block, $ \eta, \xi \in [-1, 1]^2$, using the following mapping:
+We now want to approximate the solution of the Euler equations on curvilinear geometries, which is especially important when our simulation domain has curved boundaries. In the last semester, we learned how to construct curvilinear mappings. For this part of the project, we will use curvilinear mappings to extend our standard and split-form DGSEM code to curvilinear structured meshes. The first step is to make our code able to approximate the solution of the Euler equations on a curvilinear block with periodic boundary conditions. The curvilinear block will be obtained from a Cartesian block, $ \eta, \xi \in [-1, 1]^2$, using the following mapping:
 \begin{align*}
 x = \eta + 0.15 cos\left(\frac{\pi}{2}\eta \right)cos\left(\frac{3}{2}\pi \xi \right) \\
 y = \xi + 0.15 cos\left(2\pi \eta \right) cos\left(\frac{\pi}{2}\xi \right)
@@ -387,12 +371,14 @@ y = \xi + 0.15 cos\left(2\pi \eta \right) cos\left(\frac{\pi}{2}\xi \right)
 
 \subsection{Curved mesh, transfinite mapping and contravariant fluxes}
 \textbf{1.} Generate the mesh: Implement routines to obtain the physical coordinates of the LGL nodes for all elements of the mesh.\\
+%\ \\
+%We obtain the physical coordinates by simply plugging in the reference coordinates $\xi_i, \eta_j \in [-1, 1]$ with $\xi_i = -1 + (i-1) \Delta x + \Delta x/2$ and $\eta_j = -1 + (j-1) \Delta y + \Delta y/2$ into the mapping. \\ \ \\
 \textbf{2.} Construct transfinite mappings to transform the coordinates of a reference element, $ \xi, \eta \in [-1, 1]^2$, to the physical coordinates of each element: $x(\xi,\eta)$. The input of the transfinite mapping routines should be the physical coordinates of the LGL nodes of each element.\\
 \textbf{3.} Rewrite the conservation law in terms of the contravariant fluxes,
 \begin{align*}
   J u_t + \tilde{f}_\xi +\tilde{g}_\eta =0
 \end{align*}
-and explicitly state the contravariant fluxes in terms of the quantities known from the transfinite mapping. See last semester’s script and [3]. \\
+and explicitly state the contravariant fluxes in terms of the quantities known from the transfinite mapping. \\
 \textbf{Solution:}
 The conservation law states 
 \begin{align}
@@ -469,32 +455,33 @@ We can now state equation \ref{contravariant1} in terms of the contravariant flu
  J u_t + ,\tilde{f_\xi} + \tilde{g_\eta} = 0
  \label{contravariantequation}
 \end{align}
-with $\tilde{f} := f(y_\eta) + g(-x_\eta)$ and $\tilde{g} =: f(-y_\xi) + g(x_\xi)$.
+with $\tilde{f} := f(y_\eta) + g(-x_\eta)$ and $\tilde{g} := f(-y_\xi) + g(x_\xi)$.
 %Note that equation \ref{contravariantequation} only holds for smooth solutions where we can exchange derivations such that 
 %\begin{align*}
 %23
 %\end{align*}
 %holds. (VGL WS1 S.71 EQ190)
 \\Since we know the metric terms from equation \ref{metricterms}, we can explicitly state the transformed fluxes. \\ \ \\
-\textbf{4.} Modify the volume and surface integral routines of the standard and split-form DGSEM code. Take into account that the volume numericalfluxes of the split-form DGSEM need metric dealiasing.\\
+\textbf{4.} Modify the volume and surface integral routines of the standard and split-form DGSEM code. Take into account that the volume numerical fluxes of the split-form DGSEM need metric dealiasing.\\
 
-We modified the volume integral routine by using a pseudo-strong form that includes a part of the surface integral of the strong form DGSEM. We get $[Df - Sf]$ as the (pseudo) volume integral. The only modification of the surface integral was the inclusion of the metric terms for the Riemann solver of the split form approximation from equation \ref{riemannsplit}. \\
+We modified the volume integral routine by using a pseudo-strong form that includes a part of the surface integral of the strong form DGSEM. This way we get $[Df - Sf]$ as the (pseudo) volume integral. The only modification of the surface integral was the inclusion of the metric terms for the Riemann solver of the split form approximation from equation \ref{riemannsplit}. \\
 Following \cite{Gassner_2016} ($B.9$) we included the metric terms for the two point volume flux by simply using the arithmetic mean of the contravariant vectors at the corresponding nodes:
 \begin{align*}
 (D \cdot f)_{ij} = 2 \sum D_{im} \left[ F^{\#}(U_{ij}, U_{mj}) \cdot \left\{\left\{ Ja^1_1 \right\}\right\}_{(i,j)m} + G^{\#}(U_{ij}, U_{mj}) \cdot \left\{\left\{ Ja^1_2 \right\}\right\}_{(i,j)m} \right] \\
 (g \cdot D^T)_{ij} = 2 \sum D_{jm} \left[ F^{\#}(U_{ij}, U_{im}) \cdot \left\{\left\{ Ja^2_1 \right\}\right\}_{i(m,j)} + G^{\#}(U_{ij}, U_{im}) \cdot \left\{\left\{ Ja^2_2 \right\}\right\}_{i(m,j)} \right]
 \end{align*}
 
-\textbf{5.} Test free-stream preservation, entropy conservation, entropy stability and EOCs in this distorted mesh.
-We test the free-stream preservation on the given mesh and with the following constant initial condition from $t=0$ to $t=2$.
+\textbf{5.} Test free-stream preservation, entropy conservation, entropy stability and EOCs in this distorted mesh. \\
+We test the free-stream preservation of the Chandrashekar DGSEM on the given O-mesh and with the following constant initial condition from $t=0$ to $t=2$.\\
+Initial condition, conservative variables:
 \begin{align*}
 \rho = 1.0 \\
-  \rho v_1 = 0.1 \\
-  \rho v_2 = -0.2 \\
-  rho e = 10.0
+  \rho \ v_1 = 0.1 \\
+  \rho \ v_2 = -0.2 \\
+  rho \ e = 10.0
 \end{align*}
-The estimated ($L_{inf}, L_2$) error in each dimension \\
-$3.67483821e-14, \hspace{1cm} 5.30300443e-15 \\  1.47035162e-13, \hspace{1cm} 1.84694396e-14\\  2.59042787e-13, \hspace{1cm} 3.23687394e-14 \\ 1.88293825e-13, \hspace{1cm} 1.35445279e-14$ \\
+The estimated $L_2$ error in each dimension \\
+$ 5.30300443e-15 \\ 1.84694396e-14\\ 3.23687394e-14 \\ 1.35445279e-14$ \\
 
 lies within the mechanical tolerance.\\
 Convergency tables for the Split-Form DGSEM with Chandrashekar flux on a curved mesh.
@@ -505,54 +492,96 @@ Convergency tables for the Split-Form DGSEM with Chandrashekar flux on a curved 
     \begin{tabular}{|r|r|r|}
     \hline\hline
     \textbf{Nq} & \textbf{Error} & \textbf{EOC} \\\hline
-    2 & $\num{4.79568e-01}$ & $\num{}$ \\
+    2 & $\num{4.79568e-01}$ &  \\
     4 & $\num{1.33437e-01}$ & $\num{1.85}$ \\
     8 & $\num{1.41487e-02}$ & $\num{3.24}$ \\
     16 & $\num{1.42711e-03}$ & $\num{3.31}$ \\
     32 & $\num{1.29616e-04}$ & $\num{3.46}$ \\\hline\hline
   \end{tabular} 
-  %64 │ 1.25827e-05 │ 3.36
-  \caption{N = $3$}
+  \caption{Chandrashekar DGSEM with an O-mesh and N = $3$}
   }
+  \hspace{0.5cm}
   \parbox{.45\linewidth}{
 	\centering
     \begin{tabular}{|r|r|r|}
     \hline\hline
     \textbf{Nq} & \textbf{Error} & \textbf{EOC} \\\hline
-    2 & $\num{2.83922e-01}$ & $\num{}$ \\
+    2 & $\num{2.83922e-01}$ &  \\
     4 & $\num{3.28587e-02}$ & $\num{3.11}$ \\
     8 & $\num{2.28311e-03}$ & $\num{3.85}$ \\
     16 & $\num{1.87609e-04}$ & $\num{3.61}$ \\
     32 & $\num{1.18732e-05}$ & $\num{3.98}$ \\\hline\hline
   \end{tabular}
-   \caption{N = $4$}
+   \caption{Chandrashekar DGSEM with an O-mesh and N = $4$}
   }
 \end{table}
-Die Ordnung sinkt auf einem krummlinigen Gitter, auch das standard DGSEM verliert Ordnungsstufen. (noch mit tabelle vergleichen?) \\
-Entropy dissipation with $Nq = 16$, Chandrashekar split form and Lax-Friedrichs surface flux: \\
+The high order declines on a curvilinear mesh, but the DGSEM is still able to supply arbitrary high order. \\
+We test the \textbf{entropy properties} again with the weak blast wave setting, $Nq = 16$ and $CFL=0.8$.\\
+For the Chandrashekar split form and Chandrashekar surface flux with dissipation we get: \\
 \begin{table}[H]
 \centering
 \begin{tabular}{|r|r|r|}
     \hline\hline
      & \textbf{N=4} & \textbf{N=3} \\\hline
-    \textbf{$t=0$} & $\num{-2.35388759e-04}$ & $\num{-2.31586708e-04}$ \\
-    \textbf{$t=2$} &  $\num{-1.41339324e-03}$ & $\num{-1.38273429e-03}$ \\
-    \textbf{change} & $\num{-3.97685382e-04}$ & $\num{-3.37568102e-04}$ \\\hline\hline
+    $\sum \frac{\partial S}{\partial U} U_t$ & $\num{-2.21122654e-04}$ & $\num{-1.93175666e-04}$ \\
+    $\left( \sum S \right) |_{t_0}^{T}$ & $\num{-3.8121e-04}$ & $\num{-3.7127e-04}$ \\\hline\hline
 \end{tabular}
+\caption{Entropy analysis for the Chandrashekar DGSEM with dissipation on a distorted mesh}
 \end{table}
-Test wieder mit der schwachen Schockwelle. Da wir periodische RB haben passt das iwie alles lul.\\
-Da die Entropie Konservativität mit zentralen oberflächenfluss für die Druckwelle abschmiert, testen wir die Bedingungen aus dem EOC test um Konservativität des Verfahrens (eben abhängig vom Oberflächenfluss) zu zeigen.\\
-Entropy conservation with $Nq = 16$, Chandrashekar split form and Central surface flux: \\
+The method is entropy dissipative with a dissipative surface flux.\\
+For the Chandrashekar split form and Chandrashekar surface flux without dissipation we get: \\
 \begin{table}[H]
 \centering
 \begin{tabular}{|r|r|r|}
     \hline\hline
      & \textbf{N=4} & \textbf{N=3} \\\hline
-    \textbf{$t=0$} & $\num{5.96901414e+00}$ & $\num{5.96901414e+00}$ \\
-    \textbf{$t=2$} &  $\num{5.96901414e+00}$ & $\num{5.96901414e+00}$ \\
-    \textbf{change} & $\num{-7.74646326e-12}$ & $\num{6.85391566e-12}$ \\\hline\hline
+    $\sum \frac{\partial S}{\partial U} U_t$ & $\num{-1.18232247e-16}$ & $\num{-7.43694928e-17}$ \\
+    $\left( \sum S \right) |_{t_0}^{T}$ & $\num{-1.7652e-05}$ & $\num{-6.5196e-06}$ \\\hline\hline
 \end{tabular}
+\caption{Entropy analysis for the Chandrashekar DGSEM without dissipation on a distorted mesh}
 \end{table}
+The Chandrashekar split-form DGSEM  on a distorted mesh is still entropy conserving with a non dissipative surface flux. 
+
+
+\newpage
+\section{Meilenstein 4}
+We are now ready to simulate the flow around a cylinder. In order to do that, we will deform our Cartesian block to obtain a so-called O-mesh.
+\subsection{Low and high Mach flow around a cylinder}
+\textbf{6.} Find appropriate mathematical expressions for the mapping and implement routines to compute the physical coordinates, $(x,y)$, of the LGL nodes of all elements for the O-mesh.\\ \ \\
+The mapping can be derived with the following function, $map: E \rightarrow G$:
+\begin{align*}
+map(\xi, \eta) = \left( x_0 \ (2 + \xi )\  \cos(\pi (\eta + 1)), \ y_0 (2 + \xi ) \ \sin(\pi (\eta + 1)) \right)
+\end{align*}
+Physical domain size: $[-3x_0, 3x_0] \times [-3y_0, 3y_0] $, cycle diameter $= ?$.\\ \ \\
+\textbf{7.} The periodic boundary conditions (BC) will take care of stitching the interfacing boundaries together. However, we need new BCs for the other boundaries. Implement a so-called far-field BC for the internal and external boundaries, where the external state is a constant value. \\ \ \\
+We use Dirichlet boundary conditions as so-called weak boundary conditions, i.e. the values are used for the boundary side in the calculation of the numerical flux of the boundary interfaces. \\ \ \\
+\textbf{8.} Test free-stream preservation on the new mesh.\\ \ \\
+The test for free-stream preservation for the Chendrashekar split form on an O-mesh derives an $L_2$-error within the machine accuracy. \\ \ \\
+\textbf{9.} Replace the BC of the internal boundary with a free-slip wall BC, where the external state is obtained by mirroring the normal components of the momentum of the internal state. The external density and total energy must be equal as in the internal state. \\
+\textbf{10.} Run the simulation of the inviscid flow around a cylinder at a low Mach number, $Ma=0.1$, and compare with the solution derived for the potential flow around a cylinder. \\ \ \\
+Under the given conditions, the unviscous flow around a cylinder attains a constant state. 
+\begin{figure}[H]
+\includegraphics[scale=0.65]{Cylinder_Flow_not_viscous.png}
+\caption{Flow around a cylinder, constant state at $t = 40 $}
+\end{figure} 
+Comparing this numerical solution with the potential flow lines around a cylinder \ref{potentialFlow}, we can confirm our solution. \\
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{potentialFlow.png}
+\label{potentialFlow}
+\caption{Potential flow around a cylinder. From https://en.wikipedia.org}
+\end{figure}
+
+\textbf{11.} What can you tell about the stability of the standard DGSEM for the Euler equations in comparison to the split-form scheme for this particular example?\\ \ \\
+The standard DGSEM lacks the stability properties of the Chandrashekar split form. In this particular example we observe a crash of the standard DGSEM after around $8.16$ seconds. Even when lowering the CFL condition, the standard DGSEM still crashes and can't reach the constant state of a flow around the cylinder.\\
+\textbf{12.} What happens when you increase the Mach number and approach Ma=1? \\ \ \\
+For an increased Mach number, the standard DGSEM crashes even earlier. The Chandrashekar split form also crashes for higher Mach numbers. At around $50\%$ Mach, the program crashes at $t = 13$, with $80\%$ Mach the program crashes at around $t=4$. The following visualization of the approximation right before the crash depicts the occuring problem: \\
+\begin{figure}[H]
+\includegraphics[scale=1]{80Mach_Crash.png}
+\caption{80\% Mach at $t=4$, right before the crash}
+\end{figure}
+As we can see, the approximation is rather swirly than smooth. Rho fällt unter null undso
+
 
 \newpage
 \addcontentsline{toc}{section}{Literaturverzeichnis}
@@ -562,28 +591,4 @@ Entropy conservation with $Nq = 16$, Chandrashekar split form and Central surfac
 
 
 \end{document}
-
-
-
-%  
-%
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

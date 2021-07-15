@@ -2,45 +2,47 @@
 using OrdinaryDiffEq
 using Trixi
 
-
-# flux_central for conservation and lax friedrichs for stability ? 
-# -> central flux doesnt even work for standard DGSEM
-
 ##########  EINSTELLUNGEN     #########
-# Entropy conservation test with central surface flux and other initial conditions since it crashes with the blast wave
-# initial_condition =  initial_condition_convergence_test
-# surface_flux = flux_central
+# BLZ: we adjust the CFL and the terminal time to test the different methods for stability
+# maximal setting for N = 3, Nq = 16: Chandrashekar without dissipation, CFL = 2.37, t = 100
 
 initial_condition = initial_condition_weak_blast_wave
-CFL = 0.8
-tspan = (0.0, 10)
 N = 3
 cells_per_dimension = (16, 16)
 
+CFL = 2.37
+tspan = (0.0, 100)
+
+# Standard DGSEM Entropy STability
+# polydeg = N
+# surface_flux = flux_lax_friedrichs # flux_chandrashekar # flux_central # 
+# volume_integral = VolumeIntegralWeakForm()
+# solver = DGSEM(polydeg = polydeg, surface_flux = surface_flux, volume_integral = volume_integral )
+
 # CHandrashekar DGSEM Entropy STability
-surface_flux = flux_chandrashekar # FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive)) #    
+surface_flux = flux_chandrashekar # FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive)) #   
 volume_flux  = flux_chandrashekar
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
 basis = LobattoLegendreBasis(N)
 solver = DGSEM(basis, surface_flux, volume_integral)
 
-# Standard DGSEM Entropy STability
-# polydeg = N
-# surface_flux = flux_lax_friedrichs
-# volume_integral = VolumeIntegralWeakForm()
-# solver = DGSEM(polydeg = polydeg, surface_flux = surface_flux, volume_integral = volume_integral )
 
 ###############################################################################
 # semidiscretization of the compressible Euler equations
 
+
+
 equations = CompressibleEulerEquations2D(1.4)
+
+
 
 coordinates_min = (-2.0, -2.0)
 coordinates_max = ( 2.0,  2.0)
-
 mesh = CurvedMesh(cells_per_dimension, coordinates_min, coordinates_max)
 
+
 semi = SemidiscretizationHyperbolic(mesh, equations, initial_condition, solver)
+
 
 ###############################################################################
 # ODE solvers, callbacks etc.

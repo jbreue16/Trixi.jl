@@ -3,9 +3,13 @@ using OrdinaryDiffEq
 using Trixi
 using Plots
 
-v1 = 0.38
-tspan = (0.0, 1)
-tspan_max = 0.3
+v1 = 0.1 # MACH: v1 = 0.38 -> 10.16%, v1 = 0.1 -> 2.67? %
+tspan = (0.0, 5) # ≈ 20 für stabilen Zustand
+CFL = 0.8
+cells_per_dimension = (16, 16)
+
+visualization = VisualizationCallback(interval=200,variable_names=["v1","v2"], plot_creator=Trixi.save_plot)# clims=(-0.5,0.5), 
+
 function WR2_initial_condition_constant(x, t, equations::CompressibleEulerEquations2D)
     rho = 1.0
     rho_v1 = v1
@@ -22,18 +26,10 @@ volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
 basis = LobattoLegendreBasis(4)
 solver = DGSEM(basis, surface_flux, volume_integral)
 
-
-CFL = 0.8
-
 ###############################################################################
 # semidiscretization of the compressible Euler equations
 
 equations = CompressibleEulerEquations2D(1.4)
-
-
-coordinates_min = (-2.0, -2.0)
-coordinates_max = ( 2.0,  2.0)
-cells_per_dimension = (16, 16)
 
 # mapping O-mesh
 function mapping(xi_, eta_)
@@ -41,8 +37,10 @@ function mapping(xi_, eta_)
     ξ = xi_ 
     η = eta_
 
-    x = 2 * (2 + ξ ) * cos(π * (η + 1))
-    y = 2 * (2 + ξ ) * sin(π * (η + 1))
+    size = 2    # gebietsgröße
+    d = 2       # ≈ durchmesser
+    x = size * (d + ξ ) * cos(π * (η + 1))
+    y = size * (d + ξ ) * sin(π * (η + 1))
 
     return SVector(x, y)
 end
@@ -142,7 +140,7 @@ analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_anal
                                                 
                                                 )
 
-callbacks = CallbackSet(summary_callback, stepsize_callback, analysis_callback)
+callbacks = CallbackSet(summary_callback, stepsize_callback, analysis_callback) #, visualization)
 
 
 ###############################################################################
@@ -157,9 +155,9 @@ sol = solve(ode, CarpenterKennedy2N54(williamson_condition=false),
             save_everystep=false, callback=callbacks);
 summary_callback() # print the timer summary
 
-pd=PlotData2D(sol)
-b=plot(pd["rho"])
-plot!(getmesh(pd))
+# pd=PlotData2D(sol)
+# b=plot(pd["rho"])
+# plot!(getmesh(pd))
 
 # plot(sol)
 # # savefig(plotd, "test.png")

@@ -13,18 +13,13 @@ volume_integral = VolumeIntegralFluxDifferencing(volume_flux)
 basis = LobattoLegendreBasis(4)
 solver = DGSEM(basis, surface_flux, volume_integral)
 
-
+cells_per_dimension = (16, 16)
 CFL = 0.5
-tspan = (0.0, 1)
+tspan = (0.0, 50)
 ###############################################################################
 # semidiscretization of the compressible Euler equations
 
 equations = CompressibleEulerEquations2D(1.4)
-
-
-coordinates_min = (-2.0, -2.0)
-coordinates_max = ( 2.0,  2.0)
-cells_per_dimension = (16, 16)
 
 # mapping O-mesh
 function mapping(xi_, eta_)
