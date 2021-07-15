@@ -7,7 +7,7 @@ using PrettyTables
 ######### EINSTELLUNGEN ############
 N_vec = [2]
 Nq_vec = [2, 4, 8] # , 16] # , 32]
-CFL = 0.01         
+CFL = 0.001         
 # timespan for periodic solution
 tspan = (0.0, 2.0)
 latex = false
@@ -33,28 +33,31 @@ end
 # semidiscretization of the compressible Euler equations
 
 # equations = CompressibleEulerEquations2D(1.4)
-equations = CompressibleEulerEquations2D(1.4, viscous=true, mu=0.0001)
+equations = CompressibleEulerEquations2D(1.4, viscous=true, mu=0.01)
 
 # copied from EUlerEquation2D to do modifications 
-function WR2_initial_condition_convergence_test(x, t, equations::CompressibleEulerEquations2D)
-    c = 2
-    A = 0.1
-    L = 2
-    f = 1 / L
-    ω = 2 * pi * f
-    ini = c + A * sin(ω * (x[1] + x[2] - t))
-  
+# Source terms and initial conditions for EOC tests
+function initial_condition_convergence_test_viscous(x, t, equations::Trixi.AbstractEquations)
+    # μ = equations.mu
+    # Pr = equations.Pr
+    # κ = equations.gamma
+    # k = 2 # k = c_p * μ / Pr
+    # k = 114 * μ / Pr
+    k = 0
+    c = 4 
+    ω = 0.5
+    ini = sin(k * (x[1] + x[2]) - ω * t) + c
+
     rho = ini
     rho_v1 = ini
     rho_v2 = ini
     rho_e = ini^2
-  
+
     return SVector(rho, rho_v1, rho_v2, rho_e)
 end
 
-# viscous Conditions
 @inline function source_terms_convergence_test_viscous(u, x, t, equations::Trixi.AbstractEquations)
-    # Same settings as in initial_condition
+    # Same settings as in `initial_condition`
     μ = equations.mu
     Pr = equations.Pr
     κ = equations.gamma
@@ -81,53 +84,8 @@ end
     return SVector(du1, du2, du3, du4)
 end
 
-@inline function source_terms_convergence_test_viscous(u, x, t, equations::Trixi.AbstractEquations)
-    # Same settings as in initial_condition
-    μ = equations.mu
-    Pr = equations.Pr
-    κ = equations.gamma
-    # k = 2 # k = c_p * μ / Pr
-    k = 114 * μ / Pr
-    # k = 0
-    c = 4 
-    ω = 0.5
-
-    x, y = x
-    co = cos(k * (x + y) - ω * t)
-    si = sin(2 * k * (x + y) - 2 * ω * t)
-    tmp1 = 2 * k - ω
-    tmp2 = - ω + 2 * k * c * κ - k * κ + 3 * ω - 2 * k * c
-    tmp3 = k * κ - k
-    tmp4 = 4 * k * c * κ + 2 * k - 2 * k * κ - 2 * ω * c
-    tmp5 = 2 * k * κ - ω
-
-    du1 = co * tmp1
-    du2 = co * tmp2 + si * tmp3
-    du3 = co * tmp2 + si * tmp3
-    du4 = co * tmp4 + si * tmp5 + sin(k * (x + y) - ω * t) * (2 * k^2 * μ * κ / Pr)
-
-    return SVector(du1, du2, du3, du4)
-end
-
-function WR2_initial_condition_convergence_test_viscous(x, t, equations::CompressibleEulerEquations2D)
-    μ =  equations.mu 
-    P = equations.Pr
-    κ = 1.4
-    k = 2
-    ω = 0.5 
-    c = 4
-    
-    s1 = cos(k * (x[1] + x[2]) - ω * t) * (2 * k - ω) 
-    s2 = cos(k * (x[1] + x[2]) - ω * t) * (-ω + 2 * k * c * κ - k * κ + 3 * ω - 2 * k * c) + sin(2 * k * (x[1] + x[2]) - 2 * ω * t) * (k * κ  - k)
-    s3 = cos(k * (x[1] + x[2]) - ω * t) * (-ω + 2 * k * c * κ - k * κ + 3 * ω - 2 * k * c) + sin(2 * k * (x[1] + x[2]) - 2 * ω * t) * (k * κ  - k)
-    s4 = cos(k * (x[1] + x[2]) - ω * t) * (4 * k * c * κ + 2 * k - 2 * k * κ - 2 * ω * c) + sin(2 * k * (x[1] + x[2]) - 2 * ω * t) * (2 * k * κ  - ω) +
-                            sin(k * (x[1] + x[2]) - ω * t) * ((2 * k^2 * μ * κ) / P)
-
-    return SVector(s1, s2, s3, s4)
-end
-
-initial_condition = #WR2_initial_condition_convergence_test
-source_terms = #source_terms_convergence_test
+initial_condition = initial_condition_convergence_test_viscous # initial_condition_convergence_test # 
+source_terms = source_terms_convergence_test_viscous # source_terms_convergence_test #
 
 
 # coordinates neccessary for periodic solution with periodic boundaries
@@ -184,27 +142,12 @@ for N in N_vec
         summary_callback = SummaryCallback()
         analysis_interval = 1000
             
-        analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_analysis=true,
-                                                #  extra_analysis_errors=(:conservation_error,),
-                                                #  extra_analysis_integrals=(entropy, energy_total,
-                                                #                            energy_kinetic, energy_internal)
-                                                
-                                                )
-            
-            # alive_callback = AliveCallback(analysis_interval=analysis_interval)
-            
-            # save_solution = SaveSolutionCallback(interval=100,
-            #                                      save_initial_solution=true,
-            #                                      save_final_solution=true,
-            #                                      solution_variables=cons2prim)
+        analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_analysis=true)
             
         stepsize_callback = StepsizeCallback(cfl=CFL)
             
         callbacks = CallbackSet(
-                                    # summary_callback,
                                     analysis_callback,
-                                    # alive_callback,
-                                    # save_solution,
                                     stepsize_callback)
             
             ###############################################################################
