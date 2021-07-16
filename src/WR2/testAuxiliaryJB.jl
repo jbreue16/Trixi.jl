@@ -3,8 +3,6 @@ using Trixi
 # Test mit Polynomen funktioniert -> Achte aber auf stetige RB
 # test mit Trigonometrischen Funktionen Funktioniert
 # Krumme Gitter sehen jetzt auch gut aus.
-# ABER: welche boundary conditions für die Hilfsgleichung? unstetige, zb periodisch führen zu
-#  "komischen"/großen Ableitungen wenn periodisch keinen "Sinn" macht, also unstetig ist
 # Fehler für Konstante Ableitung = 0 wird immer größer mit steigendem c, N... alles andere wird besser
 
 
@@ -114,12 +112,6 @@ initial_condition = WR2_initial_condition_trigonometric
 # Zum Vergleich mit exakter Ableitung !
 initial_condition2 = ABLx_initial_condition_trigonometric # ABLx_initial_condition_polynomial # ABLx_initial_condition_convergence_test #   
 initial_condition3 = ABLy_initial_condition_trigonometric # ABLy_initial_condition_polynomial # ABLy_initial_condition_convergence_test # 
-N = 4
-c = 64
-cells_per_dimension = (c, c)
-coordinates_min = (0.0, 0.0)
-coordinates_max = (2.0,  2.0)
-
 # boundary_conditions = boundary_condition_constant
 # boundary_conditions = boundary_condition_periodic
 boundary_conditions = (x_neg=boundary_condition_constant,
@@ -127,12 +119,23 @@ boundary_conditions = (x_neg=boundary_condition_constant,
                        y_neg=boundary_condition_periodic,
                        y_pos=boundary_condition_periodic)
 
+
+N = 4
+Nq = 64
+# coordinates_min = (0.0, 0.0)
+# coordinates_max = (2.0,  2.0)
+Zellen = [8, 16, 32, 64]
+
+
 eq = Trixi.AuxiliaryEquation()
 equations = CompressibleEulerEquations2D(1.4, viscous = true)
 
+# for Nq in Zellen
+cells_per_dimension = (Nq, Nq)
 # mesh = CurvedMesh(cells_per_dimension, mapping1zu1, periodicity = false)
 mesh = CurvedMesh(cells_per_dimension, mapping, periodicity = (false, true))
 # mesh = CurvedMesh(cells_per_dimension, mappingLin, periodicity = true) #mappingTri
+
 
 volume_integral = VolumeIntegralWeakForm()
 surface_flux = flux_lax_friedrichs
@@ -163,9 +166,11 @@ ode_y = semidiscretize(semi_y, (0.0, 0.0))
 u_ABLx = wrap_array(ode_x.u0, mesh, equations, solver, semi.cache)
 u_ABLy = wrap_array(ode_y.u0, mesh, equations, solver, semi.cache)
 
+println("N = $N und Nq = $Nq")
 for vgl = 1:4
     println("q1 cons.var. $vgl max error: ", maximum(abs.(u_ABLx[vgl, :, :, :]-q1[vgl, :, :, :])))
 end
 for vgl = 1:4
     println("q2 cons.var. $vgl max error: ", maximum(abs.(u_ABLy[vgl, :, :, :]-q2[vgl, :, :, :])))
 end
+# end
