@@ -762,52 +762,25 @@ end
 end
 
 @inline function viscous_flux(u, q1, q2, normal::AbstractVector, equations::CompressibleEulerEquations2D)
-  rho, rho_v1, rho_v2, rho_e = u
-  v1 = rho_v1 / rho
-  v2 = rho_v2 / rho
-  rho_x, rho_v1_x, rho_v2_x, rho_e_x = q1
-  rho_y, rho_v1_y, rho_v2_y, rho_e_y = q2
-  v1_x = (1 / rho) * (rho_v1_x - rho_x * v1)
-  v2_x = (1 / rho) * (rho_v2_x - rho_x * v2)
-  e_x = (1 / rho) * (rho_e_x - rho_x * (rho_e / rho))
+    rho, rho_v1, rho_v2, rho_e = u
+    v1 = rho_v1 / rho
+    v2 = rho_v2 / rho
+    rho_x, rho_v1_x, rho_v2_x, rho_e_x = q1
+    rho_y, rho_v1_y, rho_v2_y, rho_e_y = q2
+    v1_x = (1 / rho) * (rho_v1_x - rho_x * v1)
+    v2_x = (1 / rho) * (rho_v2_x - rho_x * v2)
+    e_x = (1 / rho) * (rho_e_x - rho_x * (rho_e / rho))
     v1_y = (1 / rho) * (rho_v1_y - rho_y * v1)
-  v2_y = (1 / rho) * (rho_v2_y - rho_y * v2)
-  e_y = (1 / rho) * (rho_e_y - rho_y * (rho_e / rho))
-# rotations in normal direction
-  v1_normal = v1 * (normal[1] + normal[2])
-  v2_normal = v2 * (normal[1] + normal[2])
-  rho_v1_x = rho_v1_x * (normal[1] + normal[2])
-  rho_v2_x = rho_v2_x * (normal[1] + normal[2])
-  rho_v1_y = rho_v1_y * (normal[1] + normal[2])
-  rho_v2_y = rho_v2_y * (normal[1] + normal[2])
-  v1_x_normal = v1_x * (normal[1] + normal[2])
-  v2_x_normal = v2_x * (normal[1] + normal[2])
-  e_x_normal = e_x * (normal[1] + normal[2])
-  v1_y_normal = v1_x * (normal[1] + normal[2])
-  v2_y_normal = v2_y * (normal[1] + normal[2])
-  e_y_normal =  e_y * (normal[1] + normal[2])
-  
-# Calculate fluxes depending on normal vektor
-# v_normal = v1 * normal[1] + v2 * normal[2]
-# rho_v_normal = rho_mean * v_normal
-# f1 = rho_v_normal
-# f2 = rho_v_normal * v1_avg + p_mean * normal[1]
-# f3 = rho_v_normal * v2_avg + p_mean * normal[2]
-# f4 =  f1 * 0.5 * (1 / (equations.gamma - 1) / beta_mean - velocity_square_avg) + f2 * v1_avg + f3 * v2_avg
-
-  f2_n1 = 2 * v1_x + equations.lambda * (v1_x + v2_y) 
-    f3_n1 = v2_x + v1_y
-    f4_n1 = v1 * (2 * v1_x + equations.lambda * (v1_x + v2_y)) + v2 * (v2_x + v1_y) + (equations.gamma / equations.Pr) * e_x
-
-    f2_n2 = v2_x + v1_y
-    f3_n2 = 2 * v2_x + equations.lambda * (v1_x + v2_y)
-    f4_n2 = v1 * (v2_x + v1_y) + v2 * (2 * v2_y + equations.lambda * (v1_x + v2_y)) + (equations.gamma / equations.Pr) * e_y
-
+    v2_y = (1 / rho) * (rho_v2_y - rho_y * v2)
+    e_y = (1 / rho) * (rho_e_y - rho_y * (rho_e / rho))
+    
 
     f1 = 0
-    f2 = f2_n1 * normal[1] + f2_n2 * normal[2]
-    f3 = f3_n1 * normal[1] + f3_n2 * normal[2]
-    f4 =  f4_n1 * normal[1] + f4_n2 * normal[2]
+    f2 = (2 * v1_x + equations.lambda * (v1_x + v2_y))  * normal[1]  + (v2_x + v1_y) * normal[2]
+    f3 = (v2_x + v1_y) * normal[1] + (2 * v2_x + equations.lambda * (v1_x + v2_y))  * normal[2]
+    f4x = v1 * (2 * v1_x + equations.lambda * (v1_x + v2_y)) + v2 * (v2_x + v1_y) + (equations.gamma / equations.Pr) * e_x
+    f4y = v1 * (v2_x + v1_y) + v2 * (2 * v2_y + equations.lambda * (v1_x + v2_y)) + (equations.gamma / equations.Pr) * e_y
+    f4 = f4x * normal[1] + f4y * normal[2]
     
   return SVector(equations.mu * f1, equations.mu * f2, equations.mu * f3, equations.mu * f4)
 end
@@ -817,7 +790,7 @@ end
   euler_flux = volume_flux(u_node_ll, u_node_rr, orientation, equations)
 # we use the standard DGSEM for the visous terms -> use {F_viscous} in Flux Differencing form
     viscous_flux_average = 0.5 * (viscous_flux(u_node_ll, q1_node_ll, q2_node_ll, orientation, equations) + viscous_flux(u_node_rr, q1_node_rr, q2_node_rr, orientation, equations))
-  return SVector(euler_flux .+ viscous_flux_average)
+  return SVector(euler_flux .- viscous_flux_average)
 end
 # to use the implemented code to calculate the gradient q = ∇u with DGSEM
 function flux(u, orientation::Integer, equations::AuxiliaryEquation)

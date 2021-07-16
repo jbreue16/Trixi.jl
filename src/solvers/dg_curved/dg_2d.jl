@@ -370,8 +370,8 @@ function calc_volume_integral_viscous!(du, u,
             q1_node = get_node_vars(q1, equations, dg, i, j, element)
             q2_node = get_node_vars(q2, equations, dg, i, j, element)
 
-            flux1 = flux(u_node, 1, equations) + viscous_flux(u_node, q1_node, q2_node, 1, equations)
-            flux2 = flux(u_node, 2, equations) + viscous_flux(u_node, q1_node, q2_node, 2, equations)
+            flux1 = flux(u_node, 1, equations) - viscous_flux(u_node, q1_node, q2_node, 1, equations)
+            flux2 = flux(u_node, 2, equations) - viscous_flux(u_node, q1_node, q2_node, 2, equations)
 
     # x direction
             Ja11, Ja12 = get_contravariant_vector(1, contravariant_vectors, i, j, element)
@@ -408,8 +408,8 @@ function calc_volume_integral_viscous!(du, u,
                 add_to_node_vars!(du, integral_contribution, equations, dg, ii, j, element)
             end
     # y direction                
-            flux1 = flux(u_node, 1, equations) + viscous_flux(u_node, q1_node, q2_node, 1, equations)
-            flux2 = flux(u_node, 2, equations) + viscous_flux(u_node, q1_node, q2_node, 2, equations)
+            flux1 = flux(u_node, 1, equations) - viscous_flux(u_node, q1_node, q2_node, 1, equations)
+            flux2 = flux(u_node, 2, equations) - viscous_flux(u_node, q1_node, q2_node, 2, equations)
 
             Ja21, Ja22 = get_contravariant_vector(2, contravariant_vectors, i, j, element)
 
