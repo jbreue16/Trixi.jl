@@ -4,9 +4,9 @@ using Trixi
 using Plots
 
 v1 = 0.1 # MACH: v1 = 0.38 -> 10.16%, v1 = 0.1 -> 2.67? %
-tspan = (0.0, 5) # ≈ 20 für stabilen Zustand
+tspan = (0.0, 30) # ≈ 20 für stabilen Zustand
 CFL = 0.8
-cells_per_dimension = (16, 16)
+cells_per_dimension = (64, 64)
 
 visualization = VisualizationCallback(interval=200,variable_names=["v1","v2"], plot_creator=Trixi.save_plot)# clims=(-0.5,0.5), 
 
@@ -140,7 +140,7 @@ analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_anal
                                                 
                                                 )
 
-callbacks = CallbackSet(summary_callback, stepsize_callback, analysis_callback) #, visualization)
+callbacks = CallbackSet(summary_callback, stepsize_callback, analysis_callback, visualization)
 
 
 ###############################################################################
