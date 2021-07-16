@@ -82,11 +82,13 @@ function mapping(xi_, eta_)
     return SVector(x, y)
 end
 #########################   Einstellungen  ############################################
-CFL = 0.01          
-tspan = (0.0, 1)
+CFL = 0.1          
+tspan = (0.0, 0.3)
 N = 3
 c = 32
-mu = 0.000001
+mu = 0.004 # Re = ∣∣v0∣∣ D ρ0/µ = 100 -> μ = 0.004
+visualization = VisualizationCallback(interval = 500, plot_creator=Trixi.save_plot)# clims=(-0.5,0.5),
+# variable_names=["v1","v2"],
 
 initial_condition = WR2_initial_condition_constant
 boundary_conditions = (x_neg = boundary_condition_noslip_isothermal,# boundary_condition_freeslip,
@@ -127,7 +129,7 @@ analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_anal
 
 alive_callback = AliveCallback(analysis_interval=analysis_interval)
 
-save_solution = SaveSolutionCallback(interval=100,
+save_solution = SaveSolutionCallback(interval = 500,
                                      save_initial_solution=true,
                                      save_final_solution=true,
                                      solution_variables=cons2prim)
@@ -137,7 +139,8 @@ stepsize_callback = StepsizeCallback(cfl=CFL)
 callbacks = CallbackSet(summary_callback,
                         analysis_callback,
                         # alive_callback,
-                        # save_solution,
+                        save_solution,
+                        visualization,
                         stepsize_callback)
 
 ###############################################################################

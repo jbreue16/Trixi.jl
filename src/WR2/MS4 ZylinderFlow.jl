@@ -4,7 +4,7 @@ using Trixi
 using Plots
 
 v1 = 0.1 # MACH: v1 = 0.38 -> 10.16%, v1 = 0.1 -> 2.67? %
-tspan = (0.0, 30) # ≈ 20 für stabilen Zustand
+tspan = (0.0, 35) # ≈ 20 für stabilen Zustand
 CFL = 0.8
 cells_per_dimension = (64, 64)
 
