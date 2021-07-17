@@ -207,7 +207,7 @@ Convergency tables for our DGSEM are calculated with mu=0.0001.
   }
 \end{table}
 
-Furthermore, we test our method for a Gaussian curve as initial condition.
+Furthermore, we test our method for a Gaussian impuls in the densitiy with constant pressure as initial condition.
 The initial condition for $p=1$ is given by:
 \begin{align*}
 	\rho = 1 + exp(-(x^2 + y^2)) / 2 \\
@@ -220,24 +220,25 @@ A visualization of the runs up to t = 5 for the Compressible Euler and the Navie
 In Figure \ref{gaust0} we see the condition at time t=0.
 \begin{figure}[H]
 	\centering
-	\includegraphics[scale=0.5]{medien/gaus_t0.png}
-	\label{gaust0}
+	\includegraphics{medien/gaus_t0_rho.png}
 	\caption{Gaussian curve for $t=0$}
+	\label{gaust0}
 \end{figure}
 
  Now we look at the figure at time $t = 5$ and see that the Euler equation \ref{gaus_euler_t5} preserves the impuls thanks to the periodic BC. With the Navier-Stokes equation in figure \ref{gaus_nse_t5} we see well the influence of the parabolic terms. These soften the solution.
+ 
  \begin{figure}[H]
  	\centering
- 	\includegraphics[scale=0.5]{medien/eulert5.png}
+ 	\includegraphics{medien/eulert5_rho.png}
+ 	\caption{Gaussian impuls in density for $t=5$ solved with compressible Euler Equation}
  	\label{gaus_euler_t5}
- 	\caption{Gaussian curve for $t=5$ solved with compressible Euler Equation}
  \end{figure}
 
  \begin{figure}[H]
 	\centering
-	\includegraphics[scale=0.5]{medien/nset5.png}
+	\includegraphics{medien/nset5_rho.png}
+	\caption{Gaussian impuls in density for $t=5$ solved with Navier-Stokes Equation}
 	\label{gaus_nse_t5}
-	\caption{Gaussian curve for $t=5$ solved with Navier-Stokes Equation}
 \end{figure}
 
 
