@@ -649,8 +649,8 @@ end
 function calc_boundary_flux_auxiliary!(cache, u, t, boundary_condition::BoundaryConditionPeriodic,
     mesh::CurvedMesh{2}, equations, dg::DG, nabla)
     @assert isperiodic(mesh)
-    calc_boundary_flux!(cache, u, t, (boundary_condition, boundary_condition,
-                        boundary_condition, boundary_condition), mesh, equations, dg)
+    calc_boundary_flux_auxiliary!(cache, u, t, (boundary_condition, boundary_condition,
+                        boundary_condition, boundary_condition), mesh, equations, dg, nabla)
 end
 
 
