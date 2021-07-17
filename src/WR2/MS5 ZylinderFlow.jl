@@ -81,13 +81,14 @@ function mapping(xi_, eta_)
     y = size * (d + ξ ) * sin(π * (η + 1))
     return SVector(x, y)
 end
+
 #########################   Einstellungen  ############################################
-CFL = 0.1          
-tspan = (0.0, 0.3)
+CFL = 0.3         
+tspan = (0.0, 35)
 N = 3
 c = 32
-mu = 0.004 # Re = ∣∣v0∣∣ D ρ0/µ = 100 -> μ = 0.004
-visualization = VisualizationCallback(interval = 500, plot_creator=Trixi.save_plot)# clims=(-0.5,0.5),
+mu = 0.002 # Re = ∣∣v0∣∣ D ρ0/µ = 100 -> μ = 0.002
+#visualization = VisualizationCallback(interval = 500, plot_creator=Trixi.save_plot)# clims=(-0.5,0.5),
 # variable_names=["v1","v2"],
 
 initial_condition = WR2_initial_condition_constant
@@ -127,6 +128,8 @@ analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_anal
                                       # energy_kinetic, energy_internal)
                                       )
 
+#visualization = VisualizationCallback(interval=150,variable_names=["v1","v2"], plot_creator=Trixi.save_plot)                                      
+
 alive_callback = AliveCallback(analysis_interval=analysis_interval)
 
 save_solution = SaveSolutionCallback(interval = 500,
@@ -140,7 +143,7 @@ callbacks = CallbackSet(summary_callback,
                         analysis_callback,
                         # alive_callback,
                         save_solution,
-                        visualization,
+                        #visualization,
                         stepsize_callback)
 
 ###############################################################################
