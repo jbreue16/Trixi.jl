@@ -559,15 +559,15 @@ We use Dirichlet boundary conditions as so-called weak boundary conditions, i.e.
 The test for free-stream preservation for the Chendrashekar split form on an O-mesh derives an $L_2$-error within the machine accuracy. \\ \ \\
 \textbf{9.} Replace the BC of the internal boundary with a free-slip wall BC, where the external state is obtained by mirroring the normal components of the momentum of the internal state. The external density and total energy must be equal as in the internal state. \\
 \textbf{10.} Run the simulation of the inviscid flow around a cylinder at a low Mach number, $Ma=0.1$, and compare with the solution derived for the potential flow around a cylinder. \\ \ \\
-Under the given conditions, the unviscous flow around a cylinder attains a constant state. 
+Under the given conditions, the unviscous flow around a cylinder attains a constant state. We plot the velocities at this constant state to compare them to the potential flow lines around a cylinder.
 \begin{figure}[H]
-\includegraphics[scale=0.65]{Cylinder_Flow_not_viscous.png}
-\caption{Flow around a cylinder, constant state at $t = 40 $}
+\includegraphics[scale=1]{Abbildungen/Cylinder_Flow_not_viscous.png}
+\caption{Flow around a cylinder, constant state at $t = 20 $}
 \end{figure} 
 Comparing this numerical solution with the potential flow lines around a cylinder \ref{potentialFlow}, we can confirm our solution. \\
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.5]{potentialFlow.png}
+\includegraphics[scale=0.5]{Abbildungen/potentialFlow.png}
 \label{potentialFlow}
 \caption{Potential flow around a cylinder. From https://en.wikipedia.org}
 \end{figure}
@@ -577,11 +577,169 @@ The standard DGSEM lacks the stability properties of the Chandrashekar split for
 \textbf{12.} What happens when you increase the Mach number and approach Ma=1? \\ \ \\
 For an increased Mach number, the standard DGSEM crashes even earlier. The Chandrashekar split form also crashes for higher Mach numbers. At around $50\%$ Mach, the program crashes at $t = 13$, with $80\%$ Mach the program crashes at around $t=4$. The following visualization of the approximation right before the crash depicts the occuring problem: \\
 \begin{figure}[H]
-\includegraphics[scale=1]{80Mach_Crash.png}
+\includegraphics[scale=1]{Abbildungen/80Mach_Crash.png}
 \caption{80\% Mach at $t=4$, right before the crash}
 \end{figure}
 As we can see, the approximation is rather swirly than smooth. Rho fällt unter null undso
 
+
+\newpage
+\section{Meilenstein 5}
+
+\textbf{2.} Use an analytical function for u and corroborate that the DGSEM
+discretization of q converges to the exact gradient when the mesh is
+refined and the polynomial degree is increased.\\
+\\
+To show convergence of the DGSEM for the gradient equation
+\begin{align*}
+q = \nabla u,
+\end{align*}
+we use the state $u(x, y)=(sin(\pi x) + cos(\pi y))/\pi$ with exact solution $q(x, y) = (cos(\pi x), -sin(\pi y))^T$. Additionally we compare the results for an cartesian mesh and the curvilinear mesh from milestone $3$.
+
+\begin{table}[H]
+	\parbox{.45\linewidth}{
+		\centering
+		\begin{tabular}{|r|r|}
+			\hline\hline
+			\textbf{Nq} & \textbf{Error} \\\hline
+			2 & $\num{0.21473613766002875}$   \\
+			4 & $\num{0.02529585858522239}$  \\
+			8 & $\num{0.0038083227095634174}$ \\
+			16 & $\num{0.0004974231793895675}$ \\
+			32 & $\num{6.285565805803145e-5}$ \\
+			64 & $\num{7.878221737262274e-6}$ \\\hline
+		\end{tabular}
+		\caption{N = $3$, cartesian mesh}
+	}
+	\hspace{0.5cm}
+	\parbox{.45\linewidth}{
+		\centering
+		\begin{tabular}{|r|r|}
+			\hline\hline
+			\textbf{Nq} & \textbf{Error} \\\hline
+			2 & $\num{0.05016618799709978}$   \\
+			4 & $\num{0.002798896039537979}$  \\
+			8 & $\num{0.00021302578514426074}$ \\
+			16 & $\num{1.3942968315028281e-5}$ \\
+			32 & $\num{8.81398612762041e-7}$ \\
+			64 & $\num{5.52511769669195e-8}$ \\\hline
+		\end{tabular}
+		\caption{N = $4$, cartesian mesh}
+	}
+\end{table}
+
+\begin{table}[H]
+	\parbox{.45\linewidth}{
+		\centering
+		\begin{tabular}{|r|r|}
+			\hline\hline
+			\textbf{Nq} & \textbf{Error} \\\hline
+			2 & $\num{1.51298918244155}$   \\
+			4 & $\num{0.4392019997259805}$  \\
+			8 & $\num{0.09293550502654335}$ \\
+			16 & $\num{0.016173928213581434}$ \\
+			32 & $\num{0.0020883568462799484}$ \\
+			64 & $\num{0.00026585590123140435}$ \\\hline
+		\end{tabular}
+		\caption{N = $3$, curvilinear mesh}
+	}
+	\hspace{0.5cm}
+	\parbox{.45\linewidth}{
+		\centering
+		\begin{tabular}{|r|r|}
+			\hline\hline
+			\textbf{Nq} & \textbf{Error} \\\hline
+			2 & $\num{1.1048534283816325}$   \\
+			4 & $\num{0.10083682757226042}$  \\
+			8 & $\num{0.01929397642980535}$ \\
+			16 & $\num{0.0013243204261542685}$ \\
+			32 & $\num{8.72762662463833e-5}$ \\
+			64 & $\num{5.423258678582954e-6}$ \\\hline
+		\end{tabular}
+		\caption{N = $4$, curvilinear mesh}
+	}
+\end{table}
+The numerical gradient converges to the analytical solution, when the polynomial degree or the number of cells is increased. As expected the DGSEM performs better on a cartesian mesh, but is still high order accurate on the curvilinear mesh. \\ \ \\
+
+\textbf{4.} Test free-stream preservation and EOCs using a fully periodic mesh.\\
+\\
+We test the free-stream preservation for the Navier-Stokes-Equation on a cartesian grid with periodic BC.
+We calculate the solution from $t=0$ to $t=1$ with $\mu = 0.001$.\\
+Initial condition, conservative variables:
+\begin{align*}
+	\rho = 1.0 \\
+  	\rho \ v_1 = 0.1 \\
+  	\rho \ v_2 = -0.2 \\
+  	rho \ e = 10.0
+\end{align*}
+The estimated $L_2$ error in each dimension \\
+$ 7.14432553e-17 \\ 5.78703601e-16\\ 3.87269218e-16  \\ 1.28702835e-15$ \\
+
+lies within the mechanical tolerance.\\
+
+Convergency tables for our DGSEM are calculated with $\mu=0.0001$.
+
+\begin{table}[H]
+\parbox{.45\linewidth}{
+\centering
+    \begin{tabular}{|r|r|r|}
+    \hline\hline
+    \textbf{Nq} & \textbf{Error} & \textbf{EOC} \\\hline
+    2 & $\num{6.85535e-02}$ &  \\
+    4 & $\num{1.42105e-02}$ & $\num{2.27}$ \\
+    8 & $\num{8.12136e-04}$ & $\num{4.13}$ \\
+    16 & $\num{4.90295e-05}$ & $\num{4.05}$ \\\hline\hline
+  \end{tabular} 
+  \caption{N = $3$}
+  }
+  \hspace{0.5cm}
+  \parbox{.45\linewidth}{
+	\centering
+    \begin{tabular}{|r|r|r|}
+    \hline\hline
+    \textbf{Nq} & \textbf{Error} & \textbf{EOC} \\\hline
+    2 & $\num{2.29716e-02}$ &  \\
+    4 & $\num{8.07948e-04}$ & $\num{4.83}$ \\
+    8 & $\num{3.71614e-05}$ & $\num{4.44}$ \\
+    16 & $\num{1.76198e-06}$ & $\num{4.40}$ \\\hline\hline
+  \end{tabular}
+   \caption{N = $4$}
+  }
+\end{table}
+
+Furthermore, we test our method for a Gaussian impuls in the densitiy with constant pressure as initial condition.
+The initial condition for $p=1$ is given by:
+\begin{align*}
+	\rho = 1 + exp(-(x^2 + y^2)) / 2 \\
+	\rho \ v_1 = 1 + exp(-(x^2 + y^2)) / 2 \\
+	\rho \ v_2 = 1 + exp(-(x^2 + y^2)) / 2 \\
+	rho \ e = p / (\gamma - 1) + 1 / 2 * \rho * (v_1^2 + v_2^2)
+\end{align*}
+
+A visualization of the runs up to t = 5 for the Compressible Euler and the Navier-Stokes equations are additionally included as Gif files in the appendix. 
+In Figure \ref{gaust0} we see the condition at time t=0.
+\begin{figure}[H]
+	\centering
+	\includegraphics{Abbildungen/gaus_t0_rho.png}
+	\caption{Gaussian curve for $t=0$}
+	\label{gaust0}
+\end{figure}
+
+ Now we look at the figure at time $t = 5$ and see that the Euler equation \ref{gaus_euler_t5} preserves the impuls thanks to the periodic BC. With the Navier-Stokes equation in figure \ref{gaus_nse_t5} we see well the influence of the parabolic terms. These soften the solution.
+ 
+ \begin{figure}[H]
+ 	\centering
+ 	\includegraphics{Abbildungen/eulert5_rho.png}
+ 	\caption{Gaussian impuls in density for $t=5$ solved with compressible Euler Equation}
+ 	\label{gaus_euler_t5}
+ \end{figure}
+
+ \begin{figure}[H]
+	\centering
+	\includegraphics{Abbildungen/nset5_rho.png}
+	\caption{Gaussian impuls in density for $t=5$ solved with Navier-Stokes Equation}
+	\label{gaus_nse_t5}
+\end{figure}
 
 \newpage
 \addcontentsline{toc}{section}{Literaturverzeichnis}
