@@ -83,15 +83,16 @@ function mapping(xi_, eta_)
 end
 
 #########################   Einstellungen  ############################################
-"Note : if you change the velocity, it needs to be changed in the boundaries as well !"
+"Note : if you change the velocity, it needs to be changed in the boundaries as well !
+∣∣v0∣∣ D ρ0/µ = RE
+turbulenter:        mu = 0.0008, v1 = 0.1
+weniger turbulent:  mu = 0.0008, v1 = 1.5  "
 CFL = 0.8       
 tspan = (0.0, 500)
 N = 3
-c = 32
 cells_per_dimension = (32, 64)
-mu = 0.0008 # Re = ∣∣v0∣∣ D ρ0/µ = 100 -> μ = 0.002
+mu = 0.0008 
 #visualization = VisualizationCallback(interval = 500, plot_creator=Trixi.save_plot)# clims=(-0.5,0.5),
-# variable_names=["v1","v2"],
 
 initial_condition = WR2_initial_condition_constant
 boundary_conditions = (x_neg = boundary_condition_noslip_isothermal,# boundary_condition_freeslip,
