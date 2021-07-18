@@ -6,10 +6,11 @@ using PrettyTables
 
 ######### EINSTELLUNGEN ############
 N_vec = [3]
-Nq_vec = [2, 4, 8] # , 16] #,64] 
+Nq_vec = [2, 4, 8, 16]
 CFL = 0.1       
 # timespan for periodic solution
-tspan = (0.0, 2.0)  
+tspan = (0.0, 2.0)
+mu = 0.0001
 latex = false
 
 
