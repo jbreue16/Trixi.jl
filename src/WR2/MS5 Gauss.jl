@@ -92,7 +92,7 @@ ode = semidiscretize(semi, tspan)
 
 summary_callback = SummaryCallback()
 
-analysis_interval = 250
+analysis_interval = 500
 analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_analysis=true,
                                       # extra_analysis_errors=(:conservation_error,),
                                       # extra_analysis_integrals=(entropy, energy_total,
