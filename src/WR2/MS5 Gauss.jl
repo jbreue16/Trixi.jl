@@ -5,11 +5,11 @@ using Plots
 
 # Vgl. Gauss on an cartesian Grid with coordinates (-1,-1),(1,1) with periodic BC
 ###############################################################################
-CFL = 0.01
-tspan = (0.0, 6)
-N = 9
-c = 2
-mu = 0.001
+CFL = 0.1
+tspan = (0.0, 8)
+N = 3
+c = 8
+mu = 0.01
 
 
 function initial_condition_gauss(x, t, equations::CompressibleEulerEquations2D)
@@ -25,8 +25,8 @@ end
 
 function initial_condition_density_pulse_new(x, t, equations::CompressibleEulerEquations2D)
     rho = 1 + exp(-(x[1]^2 + x[2]^2)) / 2
-    v1 = 0
-    v2 = 1
+    v1 = 1
+    v2 = 0
     rho_v1 = rho * v1
     rho_v2 = rho * v2
     p = 1
