@@ -6,7 +6,7 @@ using Plots
 ########## functions that need to be loaded ##########################
 function WR2_initial_condition_constant(x, t, equations::CompressibleEulerEquations2D)
     rho = 1.0
-    rho_v1 = 0.1
+    rho_v1 = 1.5
     rho_v2 = 0
     rho_e = 25.0
     return SVector(rho, rho_v1, rho_v2, rho_e)
@@ -27,7 +27,7 @@ function boundary_condition_noslip_isothermal(u_inner, q1_inner, q2_inner, norma
     
     if typeof(equations) == Trixi.CompressibleEulerEquations2D{Float64} && equations.viscous
 
-        p_0 = Trixi.cons2prim([1.0, 0.1, 0.0, 25], equations)[4] # initial pressure with constant initial condition, v1 !
+        p_0 = Trixi.cons2prim([1.0, 1.5, 0.0, 25], equations)[4] # initial pressure with constant initial condition, v1 !
         ρ_0 = 1.0 # initial density
         T_0 = p_0/ρ_0 # initial temperature	
         γ = equations.gamma
@@ -56,7 +56,7 @@ function boundary_condition_stream(u_inner, q1, q2, orientation, direction, x, t
         surface_flux_function,
         equations::Trixi.AbstractEquations)
         
-    u_boundary = SVector(1, 0.1, 0, 25)
+    u_boundary = SVector(1, 1.5, 0, 25)
         # Calculate boundary flux
     if direction in (2, 4) # u_inner is "left" of boundary, u_boundary is "right" of boundary
         flux = surface_flux_function(u_inner, u_boundary, orientation, equations)
