@@ -12,7 +12,7 @@ CFL = 0.8
 tspan = (0.0, 2.0)
 latex = false
 
-
+ 
 surface_flux = FluxPlusDissipation(flux_chandrashekar, DissipationLocalLaxFriedrichs(max_abs_speed_naive)) #flux_lax_friedrichs
 volume_flux  = flux_chandrashekar 
 volume_integral = VolumeIntegralFluxDifferencing(volume_flux)

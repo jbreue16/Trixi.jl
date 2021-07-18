@@ -1,0 +1,23 @@
+\begin{thebibliography}{1}
+
+\bibitem{Gassner_WR1}
+G.~J. Gassner.
+\newblock Skript wissenschaftliches rechnen i: Discontinous galerkin verfahren.
+\newblock 2020.
+
+\bibitem{Gassner_2016}
+G.~J. Gassner, A.~R. Winters, and D.~A. Kopriva.
+\newblock Split form nodal discontinuous galerkin schemes with
+  summation-by-parts property for the compressible euler equations.
+\newblock {\em Journal of Computational Physics}, 327:39–66, Dec 2016.
+
+\bibitem{BoundaryPaper}
+F.~J. Hindenlang, G.~J. Gassner, and D.~A. Kopriva.
+\newblock Stability of wall boundary condition procedures for discontinuous
+  galerkin spectral element approximations of the compressible euler equations.
+\newblock In S.~J. Sherwin, D.~Moxey, J.~Peir{\'o}, P.~E. Vincent, and
+  C.~Schwab, editors, {\em Spectral and High Order Methods for Partial
+  Differential Equations ICOSAHOM 2018}, pages 3--19, Cham, 2020. Springer
+  International Publishing.
+
+\end{thebibliography}

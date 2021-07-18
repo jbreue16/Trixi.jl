@@ -77,8 +77,8 @@ function mapping(xi_, eta_)
     η = eta_
     size = 2    # gebietsgröße * 3
     d = 1.5       # relativ zum durchmesser
-    x = size * (d + ξ ) * cos(π * (η + 1))
-    y = size * (d + ξ ) * sin(π * (η + 1))
+    x = size * (d + ξ) * cos(π * (η + 1))
+    y = size * (d + ξ) * sin(π * (η + 1))
     return SVector(x, y)
 end
 
