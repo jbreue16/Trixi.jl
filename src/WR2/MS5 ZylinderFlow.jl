@@ -6,7 +6,7 @@ using Plots
 ########## functions that need to be loaded ##########################
 function WR2_initial_condition_constant(x, t, equations::CompressibleEulerEquations2D)
     rho = 1.0
-    rho_v1 = 0.1
+    rho_v1 = 2
     rho_v2 = 0
     rho_e = 25.0
     return SVector(rho, rho_v1, rho_v2, rho_e)
@@ -56,7 +56,7 @@ function boundary_condition_stream(u_inner, q1, q2, orientation, direction, x, t
         surface_flux_function,
         equations::Trixi.AbstractEquations)
         
-    u_boundary = SVector(1, 0.1, 0, 25)
+    u_boundary = SVector(1, 0.2, 0, 25)
         # Calculate boundary flux
     if direction in (2, 4) # u_inner is "left" of boundary, u_boundary is "right" of boundary
         flux = surface_flux_function(u_inner, u_boundary, orientation, equations)
@@ -83,11 +83,11 @@ function mapping(xi_, eta_)
 end
 
 #########################   Einstellungen  ############################################
-CFL = 0.3         
+CFL = 0.8        
 tspan = (0.0, 35)
 N = 3
 c = 32
-mu = 0.002 # Re = ∣∣v0∣∣ D ρ0/µ = 100 -> μ = 0.002
+mu = 0.0002 # Re = ∣∣v0∣∣ D ρ0/µ = 100 -> μ = 0.002
 #visualization = VisualizationCallback(interval = 500, plot_creator=Trixi.save_plot)# clims=(-0.5,0.5),
 # variable_names=["v1","v2"],
 
@@ -128,7 +128,7 @@ analysis_callback = AnalysisCallback(semi, interval=analysis_interval, save_anal
                                       # energy_kinetic, energy_internal)
                                       )
 
-#visualization = VisualizationCallback(interval=150,variable_names=["v1","v2"], plot_creator=Trixi.save_plot)                                      
+visualization = VisualizationCallback(interval=150,variable_names=["v1","v2"], plot_creator=Trixi.save_plot)                                      
 
 alive_callback = AliveCallback(analysis_interval=analysis_interval)
 
@@ -143,7 +143,7 @@ callbacks = CallbackSet(summary_callback,
                         analysis_callback,
                         # alive_callback,
                         save_solution,
-                        #visualization,
+                        visualization,
                         stepsize_callback)
 
 ###############################################################################
