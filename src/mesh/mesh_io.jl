@@ -84,7 +84,10 @@ function save_mesh_file(mesh::TreeMesh, output_directory, timestep,
   return filename
 end
 
-
+# Does not save the mesh itself to an HDF5 file. Instead saves important attributes
+# of the mesh, like its size and the type of boundary mapping function.
+# Then, within Trixi2Vtk, the CurvedMesh and its node coordinates are reconstructured from
+# these attributes for plotting purposes
 function save_mesh_file(mesh::CurvedMesh, output_directory)
   # Create output directory (if it does not exist)
   mkpath(output_directory)
@@ -104,31 +107,61 @@ function save_mesh_file(mesh::CurvedMesh, output_directory)
 end
 
 
+# Does not save the mesh itself to an HDF5 file. Instead saves important attributes
+# of the mesh, like its size and the corresponding `.mesh` file used to construct the mesh.
+# Then, within Trixi2Vtk, the UnstructuredQuadMesh and its node coordinates are reconstructured
+# from these attributes for plotting purposes
+function save_mesh_file(mesh::UnstructuredQuadMesh, output_directory)
+  # Create output directory (if it does not exist)
+  mkpath(output_directory)
+
+  filename = joinpath(output_directory, "mesh.h5")
+
+  # Open file (clobber existing content)
+  h5open(filename, "w") do file
+    # Add context information as attributes
+    attributes(file)["mesh_type"] = get_name(mesh)
+    attributes(file)["ndims"] = ndims(mesh)
+    attributes(file)["size"] = length(mesh)
+    attributes(file)["mesh_filename"] = mesh.filename
+    attributes(file)["periodicity"] = collect(mesh.periodicity)
+  end
+
+  return filename
+end
+
+
+
 """
     load_mesh(restart_file::AbstractString; n_cells_max)
 
 Load the mesh from the `restart_file`.
 """
-function load_mesh(restart_file::AbstractString; n_cells_max, RealT=Float64)
+function load_mesh(restart_file::AbstractString; n_cells_max=0, RealT=Float64)
+  # Determine mesh filename
+  mesh_file = get_restart_mesh_filename(restart_file, Val(mpi_isparallel()))
+
   if mpi_isparallel()
-    return load_mesh_parallel(restart_file; n_cells_max=n_cells_max, RealT=RealT)
+    return load_mesh_parallel(mesh_file; n_cells_max=n_cells_max, RealT=RealT)
   end
 
-  load_mesh_serial(restart_file; n_cells_max=n_cells_max, RealT=RealT)
+  load_mesh_serial(mesh_file; n_cells_max=n_cells_max, RealT=RealT)
 end
 
-function load_mesh_serial(restart_file::AbstractString; n_cells_max, RealT)
-  ndims, mesh_type = h5open(restart_file, "r") do file
+function load_mesh_serial(mesh_file::AbstractString; n_cells_max, RealT)
+  ndims, mesh_type = h5open(mesh_file, "r") do file
     return read(attributes(file)["ndims"]),
            read(attributes(file)["mesh_type"])
   end
 
   if mesh_type == "TreeMesh"
-    mesh = TreeMesh(SerialTree{ndims}, n_cells_max)
-    load_mesh!(mesh, restart_file)
+    n_cells = h5open(mesh_file, "r") do file
+      return read(attributes(file)["n_cells"])
+    end
+    mesh = TreeMesh(SerialTree{ndims}, max(n_cells, n_cells_max))
+    load_mesh!(mesh, mesh_file)
   elseif mesh_type == "CurvedMesh"
-    filename = get_restart_mesh_filename(restart_file, Val(false))
-    size_, mapping_as_string = h5open(filename, "r") do file
+    size_, mapping_as_string = h5open(mesh_file, "r") do file
       return read(attributes(file)["size"]),
              read(attributes(file)["mapping"])
     end
@@ -146,12 +179,50 @@ function load_mesh_serial(restart_file::AbstractString; n_cells_max, RealT)
       expr.head = :block
     end
 
-    mapping = @eval function(xi, eta)
-      $expr
-      mapping(xi, eta)
+    if ndims == 1
+      mapping = @eval function(xi)
+        $expr
+        mapping(xi)
+      end
+    elseif ndims == 2
+      mapping = @eval function(xi, eta)
+        $expr
+        mapping(xi, eta)
+      end
+    else # ndims == 3
+      mapping = @eval function(xi, eta, zeta)
+        $expr
+        mapping(xi, eta, zeta)
+      end
     end
 
     mesh = CurvedMesh(size, mapping; RealT=RealT, unsaved_changes=false, mapping_as_string=mapping_as_string)
+  elseif mesh_type == "UnstructuredQuadMesh"
+    mesh_filename, periodicity_ = h5open(mesh_file, "r") do file
+      return read(attributes(file)["mesh_filename"]),
+             read(attributes(file)["periodicity"])
+    end
+    mesh = UnstructuredQuadMesh(mesh_filename; RealT=RealT, periodicity=periodicity_, unsaved_changes=false)
+  elseif mesh_type == "P4estMesh"
+    p4est_filename, tree_node_coordinates,
+        nodes, boundary_names_ = h5open(mesh_file, "r") do file
+      return read(attributes(file)["p4est_file"]),
+             read(file["tree_node_coordinates"]),
+             read(file["nodes"]),
+             read(file["boundary_names"])
+    end
+
+    boundary_names = boundary_names_ .|> Symbol
+
+    p4est_file = joinpath(dirname(mesh_file), p4est_filename)
+    # Prevent Julia crashes when p4est can't find the file
+    @assert isfile(p4est_file)
+
+    conn_vec = Vector{Ptr{p4est_connectivity_t}}(undef, 1)
+    p4est = p4est_load(p4est_file, C_NULL, 0, false, C_NULL, pointer(conn_vec))
+
+    mesh = P4estMesh{ndims}(p4est, tree_node_coordinates,
+                            nodes, boundary_names, "", false)
   else
     error("Unknown mesh type!")
   end
@@ -159,14 +230,12 @@ function load_mesh_serial(restart_file::AbstractString; n_cells_max, RealT)
   return mesh
 end
 
-function load_mesh!(mesh::SerialTreeMesh, restart_file::AbstractString)
-  # Determine mesh filename
-  filename = get_restart_mesh_filename(restart_file, mpi_parallel(mesh))
-  mesh.current_filename = filename
+function load_mesh!(mesh::SerialTreeMesh, mesh_file::AbstractString)
+  mesh.current_filename = mesh_file
   mesh.unsaved_changes = false
 
   # Read mesh file
-  h5open(filename, "r") do file
+  h5open(mesh_file, "r") do file
     # Set domain information
     mesh.tree.center_level_0 = read(attributes(file)["center_level_0"])
     mesh.tree.length_level_0 = read(attributes(file)["length_level_0"])
@@ -188,30 +257,31 @@ function load_mesh!(mesh::SerialTreeMesh, restart_file::AbstractString)
 end
 
 
-function load_mesh_parallel(restart_file::AbstractString; n_cells_max, RealT)
+function load_mesh_parallel(mesh_file::AbstractString; n_cells_max, RealT)
   if mpi_isroot()
-    ndims_ = h5open(restart_file, "r") do file
-      read(attributes(file)["ndims"])
+    ndims_, n_cells = h5open(mesh_file, "r") do file
+      read(attributes(file)["ndims"]),
+      read(attributes(file)["n_cells"])
     end
     MPI.Bcast!(Ref(ndims_), mpi_root(), mpi_comm())
+    MPI.Bcast!(Ref(n_cells), mpi_root(), mpi_comm())
   else
     ndims_ = MPI.Bcast!(Ref(0), mpi_root(), mpi_comm())[]
+    n_cells = MPI.Bcast!(Ref(0), mpi_root(), mpi_comm())[]
   end
 
-  mesh = TreeMesh(ParallelTree{ndims_}, n_cells_max)
-  load_mesh!(mesh, restart_file)
+  mesh = TreeMesh(ParallelTree{ndims_}, max(n_cells, n_cells_max))
+  load_mesh!(mesh, mesh_file)
 
   return mesh
 end
 
-function load_mesh!(mesh::ParallelTreeMesh, restart_file::AbstractString)
-  # Determine mesh filename
-  filename = get_restart_mesh_filename(restart_file, mpi_parallel(mesh))
-  mesh.current_filename = filename
+function load_mesh!(mesh::ParallelTreeMesh, mesh_file::AbstractString)
+  mesh.current_filename = mesh_file
   mesh.unsaved_changes = false
 
   if mpi_isroot()
-    h5open(filename, "r") do file
+    h5open(mesh_file, "r") do file
       # Set domain information
       mesh.tree.center_level_0 = read(attributes(file)["center_level_0"])
       mesh.tree.length_level_0 = read(attributes(file)["length_level_0"])
