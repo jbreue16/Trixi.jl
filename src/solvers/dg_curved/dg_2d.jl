@@ -214,10 +214,9 @@ function calc_volume_integral!(du, u,
     @unpack contravariant_vectors = cache.elements 
     @unpack weights = dg.basis
   # Estimate the Pseudo strong Form D_pseudo = - M^-1 B + D
-    S = zeros(nnodes(dg), nnodes(dg)) # actually becomes -S
-    S[1, 1] += 1 / weights[1]
-    S[end,end] -= 1 / weights[end] 
-    D_pseudo = derivative_matrix + S
+    D_pseudo = derivative_matrix
+    D_pseudo[1, 1] += 1 / weights[1]
+    D_pseudo[end,end] -= 1 / weights[end]
 
     @threaded for element in eachelement(dg, cache)
         for j in eachnode(dg), i in eachnode(dg)
@@ -269,10 +268,9 @@ function calc_volume_integral!(du, u,
             @unpack contravariant_vectors = cache.elements
             @unpack inverse_weights = dg.basis
             @unpack derivative_matrix = dg.basis
-        # actually -S from Pseudo Strong Form!!
-            S = zeros(nnodes(dg), nnodes(dg))
-            S[  1,   1] += inverse_weights[1]
-            S[end, end] -= inverse_weights[end]
+            D_pseudo = derivative_matrix
+            D_pseudo[1, 1] += inverse_weights[1]
+            D_pseudo[end,end] -= inverse_weights[end]
 
     # Volume Integral for one Element, loop over all nodes
             for j in eachnode(dg), i in eachnode(dg)
@@ -287,12 +285,12 @@ function calc_volume_integral!(du, u,
                 if i == 1 || i == nnodes(dg)
                 # Here we can also use the phys. flux.
                     contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
-                    integral_contribution = (2 * derivative_matrix[i, i] + S[i, i]) *
+                    integral_contribution = (2 * D_pseudo[i, i] + S[i, i]) *
                                         contravariant_flux1            
                     add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
                 else
                     contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
-                    integral_contribution = 2 * derivative_matrix[i, i] * contravariant_flux1
+                    integral_contribution = 2 * D_pseudo[i, i] * contravariant_flux1
                     add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
                 end
 
@@ -304,9 +302,9 @@ function calc_volume_integral!(du, u,
                     flux1 = volume_integral.volume_flux(u_node, u_node_ii, 1, equations)
                     flux2 = volume_integral.volume_flux(u_node, u_node_ii, 2, equations)
                     contravariant_flux1 = 0.5 * (Ja11 + Ja11_) * flux1 + 0.5 * (Ja12 + Ja12_) * flux2
-                    integral_contribution = 2 * derivative_matrix[i, ii] * contravariant_flux1
+                    integral_contribution = 2 * D_pseudo[i, ii] * contravariant_flux1
                     add_to_node_vars!(du, integral_contribution, equations, dg, i,  j, element)
-                    integral_contribution = 2 * derivative_matrix[ii, i] * contravariant_flux1
+                    integral_contribution = 2 * D_pseudo[ii, i] * contravariant_flux1
                     add_to_node_vars!(du, integral_contribution, equations, dg, ii, j, element)
                 end
     # y direction                
@@ -319,12 +317,12 @@ function calc_volume_integral!(du, u,
                 if j == 1 || j == nnodes(dg)
                 # Here we can also use the phys. flux.
                     contra_flux = Ja22 * flux2 + Ja21 * flux1    
-                    integral_contribution = (2 * derivative_matrix[j, j] + S[j, j]) *
+                    integral_contribution = (2 * D_pseudo[j, j] + S[j, j]) *
                                          contra_flux
                     add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
                 else
                     contravariant_flux2 = Ja22 * flux2 + Ja21 * flux1    
-                    integral_contribution = 2 * derivative_matrix[j, j] * contravariant_flux2
+                    integral_contribution = 2 * D_pseudo[j, j] * contravariant_flux2
                     add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
                 end
     # two point flux symmetry: estimate the volume flux only one time
@@ -335,9 +333,9 @@ function calc_volume_integral!(du, u,
                     flux1 = volume_integral.volume_flux(u_node, u_node_jj, 1, equations)
                     flux2 = volume_integral.volume_flux(u_node, u_node_jj, 2, equations)
                     contravariant_flux2 = 0.5 * (Ja22 + Ja22_) * flux2 + 0.5 * (Ja21 + Ja21_) * flux1
-                    integral_contribution =  2 * derivative_matrix[j, jj] * contravariant_flux2
+                    integral_contribution =  2 * D_pseudo[j, jj] * contravariant_flux2
                     add_to_node_vars!(du, integral_contribution, equations, dg, i, j,  element)
-                    integral_contribution =  2 * derivative_matrix[jj, j] * contravariant_flux2
+                    integral_contribution =  2 * D_pseudo[jj, j] * contravariant_flux2
                     add_to_node_vars!(du, integral_contribution, equations, dg, i, jj, element)
                 end
             end
@@ -359,10 +357,9 @@ function calc_volume_integral_viscous!(du, u,
         @unpack contravariant_vectors = cache.elements
         @unpack inverse_weights = dg.basis
         @unpack derivative_matrix = dg.basis
-        # actually -S from Pseudo Strong Form!!
-        S = zeros(nnodes(dg), nnodes(dg))
-        S[  1,   1] += inverse_weights[1]
-        S[end, end] -= inverse_weights[end]
+        D_pseudo = derivative_matrix
+        D_pseudo[1, 1] += inverse_weights[1]
+        D_pseudo[end,end] -= inverse_weights[end]
 
     # Volume Integral for one Element, loop over all nodes
         for j in eachnode(dg), i in eachnode(dg)
@@ -380,12 +377,12 @@ function calc_volume_integral_viscous!(du, u,
             if i == 1 || i == nnodes(dg)
                 # Here we can also use the phys. flux.
                 contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
-                integral_contribution = (2 * derivative_matrix[i, i] + S[i, i]) *
+                integral_contribution = (2 * D_pseudo[i, i] + S[i, i]) *
                                         contravariant_flux1            
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
             else
                 contravariant_flux1 = Ja11 * flux1 + Ja12 * flux2
-                integral_contribution = 2 * derivative_matrix[i, i] * contravariant_flux1
+                integral_contribution = 2 * D_pseudo[i, i] * contravariant_flux1
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
             end
 
@@ -402,9 +399,9 @@ function calc_volume_integral_viscous!(du, u,
                 flux2 = euler_and_viscous_flux(u_node, q1_node, q2_node, u_node_ii, q1_node_ii, q2_node_ii,
                                                 2, equations, volume_integral.volume_flux)
                 contravariant_flux1 = 0.5 * (Ja11 + Ja11_) * flux1 + 0.5 * (Ja12 + Ja12_) * flux2
-                integral_contribution = 2 * derivative_matrix[i, ii] * contravariant_flux1
+                integral_contribution = 2 * D_pseudo[i, ii] * contravariant_flux1
                 add_to_node_vars!(du, integral_contribution, equations, dg, i,  j, element)
-                integral_contribution = 2 * derivative_matrix[ii, i] * contravariant_flux1
+                integral_contribution = 2 * D_pseudo[ii, i] * contravariant_flux1
                 add_to_node_vars!(du, integral_contribution, equations, dg, ii, j, element)
             end
     # y direction                
@@ -417,12 +414,12 @@ function calc_volume_integral_viscous!(du, u,
             if j == 1 || j == nnodes(dg)
                 # Here we can also use the phys. flux.
                 contra_flux = Ja22 * flux2 + Ja21 * flux1    
-                integral_contribution = (2 * derivative_matrix[j, j] + S[j, j]) *
+                integral_contribution = (2 * D_pseudo[j, j] + S[j, j]) *
                                          contra_flux
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
             else
                 contravariant_flux2 = Ja22 * flux2 + Ja21 * flux1    
-                integral_contribution = 2 * derivative_matrix[j, j] * contravariant_flux2
+                integral_contribution = 2 * D_pseudo[j, j] * contravariant_flux2
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, j, element)
             end
     # two point flux symmetry: estimate the volume flux only one time
@@ -438,9 +435,9 @@ function calc_volume_integral_viscous!(du, u,
                 flux2 = euler_and_viscous_flux(u_node, q1_node, q2_node, u_node_jj, q1_node_jj, q2_node_jj,
                                                     2, equations, volume_integral.volume_flux)
                 contravariant_flux2 = 0.5 * (Ja22 + Ja22_) * flux2 + 0.5 * (Ja21 + Ja21_) * flux1
-                integral_contribution =  2 * derivative_matrix[j, jj] * contravariant_flux2
+                integral_contribution =  2 * D_pseudo[j, jj] * contravariant_flux2
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, j,  element)
-                integral_contribution =  2 * derivative_matrix[jj, j] * contravariant_flux2
+                integral_contribution =  2 * D_pseudo[jj, j] * contravariant_flux2
                 add_to_node_vars!(du, integral_contribution, equations, dg, i, jj, element)
             end
         end
